@@ -1,0 +1,2957 @@
+{
+  "type": "karaoke",
+  "source": "synclrc",
+  "lines": [
+    {
+      "start": 0,
+      "end": 0.64,
+      "text": "紅蓮華 - LiSA ( 織部里沙)",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "紅",
+          "start": 0,
+          "end": 0.03
+        },
+        {
+          "text": "蓮",
+          "start": 0.03,
+          "end": 0.1
+        },
+        {
+          "text": "華",
+          "start": 0.1,
+          "end": 0.14
+        },
+        {
+          "text": " - ",
+          "start": 0.14,
+          "end": 0.17
+        },
+        {
+          "text": "LiSA ( ",
+          "start": 0.17,
+          "end": 0.2
+        },
+        {
+          "text": "織",
+          "start": 0.2,
+          "end": 0.24
+        },
+        {
+          "text": "部",
+          "start": 0.24,
+          "end": 0.27
+        },
+        {
+          "text": "里",
+          "start": 0.27,
+          "end": 0.3
+        },
+        {
+          "text": "沙",
+          "start": 0.3,
+          "end": 0.34
+        },
+        {
+          "text": ")",
+          "start": 0.34,
+          "end": 0.64
+        }
+      ],
+      "romajiText": "hong lian hua   -   L i S A   (   zhi bu li sha )"
+    },
+    {
+      "start": 1.22,
+      "end": 6.61,
+      "text": "強くなれる理由を知った",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "強",
+          "start": 1.22,
+          "end": 1.78
+        },
+        {
+          "text": "く",
+          "start": 1.78,
+          "end": 2.9
+        },
+        {
+          "text": "な",
+          "start": 2.9,
+          "end": 3.25
+        },
+        {
+          "text": "れ",
+          "start": 3.25,
+          "end": 3.58
+        },
+        {
+          "text": "る",
+          "start": 3.58,
+          "end": 4.54
+        },
+        {
+          "text": "理",
+          "start": 4.54,
+          "end": 4.8
+        },
+        {
+          "text": "由",
+          "start": 4.8,
+          "end": 5.11
+        },
+        {
+          "text": "を",
+          "start": 5.11,
+          "end": 5.4
+        },
+        {
+          "text": "知",
+          "start": 5.4,
+          "end": 5.86
+        },
+        {
+          "text": "っ",
+          "start": 5.86,
+          "end": 6.31
+        },
+        {
+          "text": "た",
+          "start": 6.31,
+          "end": 6.61
+        }
+      ],
+      "romajiText": "tsuyoku nareru riyuu o shitta"
+    },
+    {
+      "start": 7.63,
+      "end": 12.08,
+      "text": "僕を連れて進め",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "僕",
+          "start": 7.63,
+          "end": 8.22
+        },
+        {
+          "text": "を",
+          "start": 8.22,
+          "end": 9.46
+        },
+        {
+          "text": "連",
+          "start": 9.46,
+          "end": 9.82
+        },
+        {
+          "text": "れ",
+          "start": 9.82,
+          "end": 10.01
+        },
+        {
+          "text": "て",
+          "start": 10.01,
+          "end": 11.17
+        },
+        {
+          "text": "進",
+          "start": 11.17,
+          "end": 11.78
+        },
+        {
+          "text": "め",
+          "start": 11.78,
+          "end": 12.08
+        }
+      ],
+      "romajiText": "boku o tsure te susume"
+    },
+    {
+      "start": 18.98,
+      "end": 23.19,
+      "text": "泥だらけの走馬灯に酔う",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "泥",
+          "start": 18.98,
+          "end": 19.48
+        },
+        {
+          "text": "だ",
+          "start": 19.48,
+          "end": 19.91
+        },
+        {
+          "text": "ら",
+          "start": 19.91,
+          "end": 20.25
+        },
+        {
+          "text": "け",
+          "start": 20.25,
+          "end": 20.48
+        },
+        {
+          "text": "の",
+          "start": 20.48,
+          "end": 21.53
+        },
+        {
+          "text": "走",
+          "start": 21.53,
+          "end": 21.84
+        },
+        {
+          "text": "馬",
+          "start": 21.84,
+          "end": 21.99
+        },
+        {
+          "text": "灯",
+          "start": 21.99,
+          "end": 22.32
+        },
+        {
+          "text": "に",
+          "start": 22.32,
+          "end": 22.48
+        },
+        {
+          "text": "酔",
+          "start": 22.48,
+          "end": 22.89
+        },
+        {
+          "text": "う",
+          "start": 22.89,
+          "end": 23.19
+        }
+      ],
+      "romajiText": "doro darake no soumatou ni you"
+    },
+    {
+      "start": 24.53,
+      "end": 27.89,
+      "text": "こわばる心震える手は",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "こ",
+          "start": 24.53,
+          "end": 24.72
+        },
+        {
+          "text": "わ",
+          "start": 24.72,
+          "end": 24.87
+        },
+        {
+          "text": "ば",
+          "start": 24.87,
+          "end": 25.12
+        },
+        {
+          "text": "る",
+          "start": 25.12,
+          "end": 25.36
+        },
+        {
+          "text": "心",
+          "start": 25.36,
+          "end": 26.05
+        },
+        {
+          "text": "震",
+          "start": 26.05,
+          "end": 26.71
+        },
+        {
+          "text": "え",
+          "start": 26.71,
+          "end": 27.09
+        },
+        {
+          "text": "る",
+          "start": 27.09,
+          "end": 27.37
+        },
+        {
+          "text": "手",
+          "start": 27.37,
+          "end": 27.59
+        },
+        {
+          "text": "は",
+          "start": 27.59,
+          "end": 27.89
+        }
+      ],
+      "romajiText": "kowabaru kokoro furueru te wa"
+    },
+    {
+      "start": 28.5,
+      "end": 30.18,
+      "text": "掴みたいものがある",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "掴",
+          "start": 28.5,
+          "end": 28.79
+        },
+        {
+          "text": "み",
+          "start": 28.79,
+          "end": 28.92
+        },
+        {
+          "text": "た",
+          "start": 28.92,
+          "end": 29.07
+        },
+        {
+          "text": "い",
+          "start": 29.07,
+          "end": 29.23
+        },
+        {
+          "text": "も",
+          "start": 29.23,
+          "end": 29.39
+        },
+        {
+          "text": "の",
+          "start": 29.39,
+          "end": 29.45
+        },
+        {
+          "text": "が",
+          "start": 29.45,
+          "end": 29.67
+        },
+        {
+          "text": "あ",
+          "start": 29.67,
+          "end": 29.88
+        },
+        {
+          "text": "る",
+          "start": 29.88,
+          "end": 30.18
+        }
+      ],
+      "romajiText": "tsukami tai mono ga aru"
+    },
+    {
+      "start": 31.16,
+      "end": 32.43,
+      "text": "それだけさ",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "そ",
+          "start": 31.16,
+          "end": 31.33
+        },
+        {
+          "text": "れ",
+          "start": 31.33,
+          "end": 31.62
+        },
+        {
+          "text": "だ",
+          "start": 31.62,
+          "end": 31.88
+        },
+        {
+          "text": "け",
+          "start": 31.88,
+          "end": 32.13
+        },
+        {
+          "text": "さ",
+          "start": 32.13,
+          "end": 32.43
+        }
+      ],
+      "romajiText": "soredake sa"
+    },
+    {
+      "start": 32.89,
+      "end": 34.96,
+      "text": "夜の匂いに",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "夜",
+          "start": 32.89,
+          "end": 33.43
+        },
+        {
+          "text": "の",
+          "start": 33.43,
+          "end": 33.75
+        },
+        {
+          "text": "匂",
+          "start": 33.75,
+          "end": 34.4
+        },
+        {
+          "text": "い",
+          "start": 34.4,
+          "end": 34.66
+        },
+        {
+          "text": "に",
+          "start": 34.66,
+          "end": 34.96
+        }
+      ],
+      "romajiText": "yoru no nioi ni"
+    },
+    {
+      "start": 35.3,
+      "end": 36.44,
+      "text": "I'll spend all thirty nights",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "I'll ",
+          "start": 35.3,
+          "end": 35.46
+        },
+        {
+          "text": "spend ",
+          "start": 35.46,
+          "end": 35.68
+        },
+        {
+          "text": "all ",
+          "start": 35.68,
+          "end": 35.87
+        },
+        {
+          "text": "thirty ",
+          "start": 35.87,
+          "end": 36.14
+        },
+        {
+          "text": "nights",
+          "start": 36.14,
+          "end": 36.44
+        }
+      ],
+      "romajiText": "I'll spend all thirty nights"
+    },
+    {
+      "start": 36.45,
+      "end": 38.3,
+      "text": "空睨んでも",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "空",
+          "start": 36.45,
+          "end": 37
+        },
+        {
+          "text": "睨",
+          "start": 37,
+          "end": 37.54
+        },
+        {
+          "text": "ん",
+          "start": 37.54,
+          "end": 37.78
+        },
+        {
+          "text": "で",
+          "start": 37.78,
+          "end": 38
+        },
+        {
+          "text": "も",
+          "start": 38,
+          "end": 38.3
+        }
+      ],
+      "romajiText": "sora niran de mo"
+    },
+    {
+      "start": 38.71,
+      "end": 39.99,
+      "text": "Staring into the sky",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "Staring ",
+          "start": 38.71,
+          "end": 39.15
+        },
+        {
+          "text": "into ",
+          "start": 39.15,
+          "end": 39.47
+        },
+        {
+          "text": "the ",
+          "start": 39.47,
+          "end": 39.69
+        },
+        {
+          "text": "sky",
+          "start": 39.69,
+          "end": 39.99
+        }
+      ],
+      "romajiText": "Staring into the sky"
+    },
+    {
+      "start": 39.97,
+      "end": 44.4,
+      "text": "変わっていけるのは自分自身だけ",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "変",
+          "start": 39.97,
+          "end": 40.2
+        },
+        {
+          "text": "わ",
+          "start": 40.2,
+          "end": 40.37
+        },
+        {
+          "text": "っ",
+          "start": 40.37,
+          "end": 40.55
+        },
+        {
+          "text": "て",
+          "start": 40.55,
+          "end": 40.83
+        },
+        {
+          "text": "い",
+          "start": 40.83,
+          "end": 40.98
+        },
+        {
+          "text": "け",
+          "start": 40.98,
+          "end": 41.38
+        },
+        {
+          "text": "る",
+          "start": 41.38,
+          "end": 41.6
+        },
+        {
+          "text": "の",
+          "start": 41.6,
+          "end": 41.84
+        },
+        {
+          "text": "は",
+          "start": 41.84,
+          "end": 42.46
+        },
+        {
+          "text": "自",
+          "start": 42.46,
+          "end": 42.67
+        },
+        {
+          "text": "分",
+          "start": 42.67,
+          "end": 43.13
+        },
+        {
+          "text": "自",
+          "start": 43.13,
+          "end": 43.33
+        },
+        {
+          "text": "身",
+          "start": 43.33,
+          "end": 43.76
+        },
+        {
+          "text": "だ",
+          "start": 43.76,
+          "end": 44.1
+        },
+        {
+          "text": "け",
+          "start": 44.1,
+          "end": 44.4
+        }
+      ],
+      "romajiText": "kawatte ikeru no wa jibun jishin dake"
+    },
+    {
+      "start": 45.37,
+      "end": 46.7,
+      "text": "それだけさ",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "そ",
+          "start": 45.37,
+          "end": 45.6
+        },
+        {
+          "text": "れ",
+          "start": 45.6,
+          "end": 45.89
+        },
+        {
+          "text": "だ",
+          "start": 45.89,
+          "end": 46.14
+        },
+        {
+          "text": "け",
+          "start": 46.14,
+          "end": 46.4
+        },
+        {
+          "text": "さ",
+          "start": 46.4,
+          "end": 46.7
+        }
+      ],
+      "romajiText": "soredake sa"
+    },
+    {
+      "start": 47.28,
+      "end": 52.67,
+      "text": "強くなれる理由を知った",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "強",
+          "start": 47.28,
+          "end": 47.89
+        },
+        {
+          "text": "く",
+          "start": 47.89,
+          "end": 49.14
+        },
+        {
+          "text": "な",
+          "start": 49.14,
+          "end": 49.45
+        },
+        {
+          "text": "れ",
+          "start": 49.45,
+          "end": 49.72
+        },
+        {
+          "text": "る",
+          "start": 49.72,
+          "end": 50.66
+        },
+        {
+          "text": "理",
+          "start": 50.66,
+          "end": 50.88
+        },
+        {
+          "text": "由",
+          "start": 50.88,
+          "end": 51.22
+        },
+        {
+          "text": "を",
+          "start": 51.22,
+          "end": 51.48
+        },
+        {
+          "text": "知",
+          "start": 51.48,
+          "end": 51.93
+        },
+        {
+          "text": "っ",
+          "start": 51.93,
+          "end": 52.37
+        },
+        {
+          "text": "た",
+          "start": 52.37,
+          "end": 52.67
+        }
+      ],
+      "romajiText": "tsuyoku nareru riyuu o shitta"
+    },
+    {
+      "start": 53.73,
+      "end": 58.22,
+      "text": "僕を連れて進め",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "僕",
+          "start": 53.73,
+          "end": 54.37
+        },
+        {
+          "text": "を",
+          "start": 54.37,
+          "end": 55.6
+        },
+        {
+          "text": "連",
+          "start": 55.6,
+          "end": 55.88
+        },
+        {
+          "text": "れ",
+          "start": 55.88,
+          "end": 56.11
+        },
+        {
+          "text": "て",
+          "start": 56.11,
+          "end": 57.35
+        },
+        {
+          "text": "進",
+          "start": 57.35,
+          "end": 57.92
+        },
+        {
+          "text": "め",
+          "start": 57.92,
+          "end": 58.22
+        }
+      ],
+      "romajiText": "boku o tsure te susume"
+    },
+    {
+      "start": 60.16,
+      "end": 63.1,
+      "text": "どうしたって消せない夢も",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "ど",
+          "start": 60.16,
+          "end": 60.39
+        },
+        {
+          "text": "う",
+          "start": 60.39,
+          "end": 60.62
+        },
+        {
+          "text": "し",
+          "start": 60.62,
+          "end": 60.77
+        },
+        {
+          "text": "た",
+          "start": 60.77,
+          "end": 60.93
+        },
+        {
+          "text": "っ",
+          "start": 60.93,
+          "end": 61.1
+        },
+        {
+          "text": "て",
+          "start": 61.1,
+          "end": 61.57
+        },
+        {
+          "text": "消",
+          "start": 61.57,
+          "end": 61.77
+        },
+        {
+          "text": "せ",
+          "start": 61.77,
+          "end": 61.97
+        },
+        {
+          "text": "な",
+          "start": 61.97,
+          "end": 62.12
+        },
+        {
+          "text": "い",
+          "start": 62.12,
+          "end": 62.4
+        },
+        {
+          "text": "夢",
+          "start": 62.4,
+          "end": 62.8
+        },
+        {
+          "text": "も",
+          "start": 62.8,
+          "end": 63.1
+        }
+      ],
+      "romajiText": "dou shi ta tte kese nai yume mo"
+    },
+    {
+      "start": 63.15,
+      "end": 64.9,
+      "text": "止まれない今も",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "止",
+          "start": 63.15,
+          "end": 63.36
+        },
+        {
+          "text": "ま",
+          "start": 63.36,
+          "end": 63.59
+        },
+        {
+          "text": "れ",
+          "start": 63.59,
+          "end": 63.82
+        },
+        {
+          "text": "な",
+          "start": 63.82,
+          "end": 63.97
+        },
+        {
+          "text": "い",
+          "start": 63.97,
+          "end": 64.21
+        },
+        {
+          "text": "今",
+          "start": 64.21,
+          "end": 64.6
+        },
+        {
+          "text": "も",
+          "start": 64.6,
+          "end": 64.9
+        }
+      ],
+      "romajiText": "tomare nai ima mo"
+    },
+    {
+      "start": 64.93,
+      "end": 68.94,
+      "text": "誰かのために強くなれるなら",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "誰",
+          "start": 64.93,
+          "end": 65.37
+        },
+        {
+          "text": "か",
+          "start": 65.37,
+          "end": 65.52
+        },
+        {
+          "text": "の",
+          "start": 65.52,
+          "end": 65.82
+        },
+        {
+          "text": "た",
+          "start": 65.82,
+          "end": 66
+        },
+        {
+          "text": "め",
+          "start": 66,
+          "end": 66.23
+        },
+        {
+          "text": "に",
+          "start": 66.23,
+          "end": 66.4
+        },
+        {
+          "text": "強",
+          "start": 66.4,
+          "end": 66.87
+        },
+        {
+          "text": "く",
+          "start": 66.87,
+          "end": 67.29
+        },
+        {
+          "text": "な",
+          "start": 67.29,
+          "end": 67.72
+        },
+        {
+          "text": "れ",
+          "start": 67.72,
+          "end": 68.1
+        },
+        {
+          "text": "る",
+          "start": 68.1,
+          "end": 68.4
+        },
+        {
+          "text": "な",
+          "start": 68.4,
+          "end": 68.64
+        },
+        {
+          "text": "ら",
+          "start": 68.64,
+          "end": 68.94
+        }
+      ],
+      "romajiText": "dare ka no tame ni tsuyoku nareru nara"
+    },
+    {
+      "start": 69.36,
+      "end": 72.29,
+      "text": "ありがとう悲しみよ",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "あ",
+          "start": 69.36,
+          "end": 69.73
+        },
+        {
+          "text": "り",
+          "start": 69.73,
+          "end": 69.93
+        },
+        {
+          "text": "が",
+          "start": 69.93,
+          "end": 70.19
+        },
+        {
+          "text": "と",
+          "start": 70.19,
+          "end": 70.54
+        },
+        {
+          "text": "う",
+          "start": 70.54,
+          "end": 70.88
+        },
+        {
+          "text": "悲",
+          "start": 70.88,
+          "end": 71.55
+        },
+        {
+          "text": "し",
+          "start": 71.55,
+          "end": 71.76
+        },
+        {
+          "text": "み",
+          "start": 71.76,
+          "end": 71.99
+        },
+        {
+          "text": "よ",
+          "start": 71.99,
+          "end": 72.29
+        }
+      ],
+      "romajiText": "arigatou kanashimi yo"
+    },
+    {
+      "start": 74.43,
+      "end": 77.32,
+      "text": "世界に打ちのめされて",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "世",
+          "start": 74.43,
+          "end": 74.89
+        },
+        {
+          "text": "界",
+          "start": 74.89,
+          "end": 75.35
+        },
+        {
+          "text": "に",
+          "start": 75.35,
+          "end": 75.79
+        },
+        {
+          "text": "打",
+          "start": 75.79,
+          "end": 75.98
+        },
+        {
+          "text": "ち",
+          "start": 75.98,
+          "end": 76.22
+        },
+        {
+          "text": "の",
+          "start": 76.22,
+          "end": 76.46
+        },
+        {
+          "text": "め",
+          "start": 76.46,
+          "end": 76.7
+        },
+        {
+          "text": "さ",
+          "start": 76.7,
+          "end": 76.9
+        },
+        {
+          "text": "れ",
+          "start": 76.9,
+          "end": 77.02
+        },
+        {
+          "text": "て",
+          "start": 77.02,
+          "end": 77.32
+        }
+      ],
+      "romajiText": "sekai ni uchinomesa re te"
+    },
+    {
+      "start": 77.43,
+      "end": 79.1,
+      "text": "負ける意味を知った",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "負",
+          "start": 77.43,
+          "end": 77.58
+        },
+        {
+          "text": "け",
+          "start": 77.58,
+          "end": 77.71
+        },
+        {
+          "text": "る",
+          "start": 77.71,
+          "end": 77.92
+        },
+        {
+          "text": "意",
+          "start": 77.92,
+          "end": 78.11
+        },
+        {
+          "text": "味",
+          "start": 78.11,
+          "end": 78.3
+        },
+        {
+          "text": "を",
+          "start": 78.3,
+          "end": 78.51
+        },
+        {
+          "text": "知",
+          "start": 78.51,
+          "end": 78.66
+        },
+        {
+          "text": "っ",
+          "start": 78.66,
+          "end": 78.8
+        },
+        {
+          "text": "た",
+          "start": 78.8,
+          "end": 79.1
+        }
+      ],
+      "romajiText": "makeru imi o shitta"
+    },
+    {
+      "start": 79.12,
+      "end": 83.19,
+      "text": "紅蓮の華よ咲き誇れ",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "紅",
+          "start": 79.12,
+          "end": 79.3
+        },
+        {
+          "text": "蓮",
+          "start": 79.3,
+          "end": 79.93
+        },
+        {
+          "text": "の",
+          "start": 79.93,
+          "end": 80.42
+        },
+        {
+          "text": "華",
+          "start": 80.42,
+          "end": 80.9
+        },
+        {
+          "text": "よ",
+          "start": 80.9,
+          "end": 81.59
+        },
+        {
+          "text": "咲",
+          "start": 81.59,
+          "end": 82.03
+        },
+        {
+          "text": "き",
+          "start": 82.03,
+          "end": 82.39
+        },
+        {
+          "text": "誇",
+          "start": 82.39,
+          "end": 82.89
+        },
+        {
+          "text": "れ",
+          "start": 82.89,
+          "end": 83.19
+        }
+      ],
+      "romajiText": "guren no hana yo sakihokore"
+    },
+    {
+      "start": 83.54,
+      "end": 86.32,
+      "text": "運命を照らして",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "運",
+          "start": 83.54,
+          "end": 83.93
+        },
+        {
+          "text": "命",
+          "start": 83.93,
+          "end": 84.4
+        },
+        {
+          "text": "を",
+          "start": 84.4,
+          "end": 85.33
+        },
+        {
+          "text": "照",
+          "start": 85.33,
+          "end": 85.54
+        },
+        {
+          "text": "ら",
+          "start": 85.54,
+          "end": 85.86
+        },
+        {
+          "text": "し",
+          "start": 85.86,
+          "end": 86.02
+        },
+        {
+          "text": "て",
+          "start": 86.02,
+          "end": 86.32
+        }
+      ],
+      "romajiText": "ummei o terashi te"
+    },
+    {
+      "start": 93.56,
+      "end": 97.67,
+      "text": "イナビカリの雑音が耳を刺す",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "イ",
+          "start": 93.56,
+          "end": 93.91
+        },
+        {
+          "text": "ナ",
+          "start": 93.91,
+          "end": 94.21
+        },
+        {
+          "text": "ビ",
+          "start": 94.21,
+          "end": 94.63
+        },
+        {
+          "text": "カ",
+          "start": 94.63,
+          "end": 94.85
+        },
+        {
+          "text": "リ",
+          "start": 94.85,
+          "end": 95.11
+        },
+        {
+          "text": "の",
+          "start": 95.11,
+          "end": 96.02
+        },
+        {
+          "text": "雑",
+          "start": 96.02,
+          "end": 96.34
+        },
+        {
+          "text": "音",
+          "start": 96.34,
+          "end": 96.54
+        },
+        {
+          "text": "が",
+          "start": 96.54,
+          "end": 96.68
+        },
+        {
+          "text": "耳",
+          "start": 96.68,
+          "end": 97.01
+        },
+        {
+          "text": "を",
+          "start": 97.01,
+          "end": 97.16
+        },
+        {
+          "text": "刺",
+          "start": 97.16,
+          "end": 97.37
+        },
+        {
+          "text": "す",
+          "start": 97.37,
+          "end": 97.67
+        }
+      ],
+      "romajiText": "inabikari no zatsuon ga mimi o sasu"
+    },
+    {
+      "start": 99.17,
+      "end": 102.76,
+      "text": "戸惑う心優しいだけじゃ",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "戸",
+          "start": 99.17,
+          "end": 99.37
+        },
+        {
+          "text": "惑",
+          "start": 99.37,
+          "end": 99.75
+        },
+        {
+          "text": "う",
+          "start": 99.75,
+          "end": 99.98
+        },
+        {
+          "text": "心",
+          "start": 99.98,
+          "end": 100.74
+        },
+        {
+          "text": "優",
+          "start": 100.74,
+          "end": 101.32
+        },
+        {
+          "text": "し",
+          "start": 101.32,
+          "end": 101.56
+        },
+        {
+          "text": "い",
+          "start": 101.56,
+          "end": 101.8
+        },
+        {
+          "text": "だ",
+          "start": 101.8,
+          "end": 102.02
+        },
+        {
+          "text": "け",
+          "start": 102.02,
+          "end": 102.25
+        },
+        {
+          "text": "じ",
+          "start": 102.25,
+          "end": 102.46
+        },
+        {
+          "text": "ゃ",
+          "start": 102.46,
+          "end": 102.76
+        }
+      ],
+      "romajiText": "tomadou kokoro yasashii dake ja"
+    },
+    {
+      "start": 103.15,
+      "end": 104.83,
+      "text": "守れないものがある",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "守",
+          "start": 103.15,
+          "end": 103.42
+        },
+        {
+          "text": "れ",
+          "start": 103.42,
+          "end": 103.57
+        },
+        {
+          "text": "な",
+          "start": 103.57,
+          "end": 103.71
+        },
+        {
+          "text": "い",
+          "start": 103.71,
+          "end": 103.85
+        },
+        {
+          "text": "も",
+          "start": 103.85,
+          "end": 104
+        },
+        {
+          "text": "の",
+          "start": 104,
+          "end": 104.1
+        },
+        {
+          "text": "が",
+          "start": 104.1,
+          "end": 104.31
+        },
+        {
+          "text": "あ",
+          "start": 104.31,
+          "end": 104.53
+        },
+        {
+          "text": "る",
+          "start": 104.53,
+          "end": 104.83
+        }
+      ],
+      "romajiText": "mamore nai mono ga aru"
+    },
+    {
+      "start": 105.77,
+      "end": 107.57,
+      "text": "わかってるけど",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "わ",
+          "start": 105.77,
+          "end": 106.01
+        },
+        {
+          "text": "か",
+          "start": 106.01,
+          "end": 106.2
+        },
+        {
+          "text": "っ",
+          "start": 106.2,
+          "end": 106.39
+        },
+        {
+          "text": "て",
+          "start": 106.39,
+          "end": 106.6
+        },
+        {
+          "text": "る",
+          "start": 106.6,
+          "end": 106.88
+        },
+        {
+          "text": "け",
+          "start": 106.88,
+          "end": 107.27
+        },
+        {
+          "text": "ど",
+          "start": 107.27,
+          "end": 107.57
+        }
+      ],
+      "romajiText": "wakatteru kedo"
+    },
+    {
+      "start": 107.98,
+      "end": 109.64,
+      "text": "水面下で絡まる善悪",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "水面",
+          "start": 107.98,
+          "end": 108.37
+        },
+        {
+          "text": "下",
+          "start": 108.37,
+          "end": 108.51
+        },
+        {
+          "text": "で",
+          "start": 108.51,
+          "end": 108.65
+        },
+        {
+          "text": "絡",
+          "start": 108.65,
+          "end": 108.89
+        },
+        {
+          "text": "ま",
+          "start": 108.89,
+          "end": 109.05
+        },
+        {
+          "text": "る",
+          "start": 109.05,
+          "end": 109.2
+        },
+        {
+          "text": "善",
+          "start": 109.2,
+          "end": 109.34
+        },
+        {
+          "text": "悪",
+          "start": 109.34,
+          "end": 109.64
+        }
+      ],
+      "romajiText": "suimen ka de karamaru zen'aku"
+    },
+    {
+      "start": 109.75,
+      "end": 111.46,
+      "text": "透けて見える偽善に天罰",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "透",
+          "start": 109.75,
+          "end": 109.89
+        },
+        {
+          "text": "け",
+          "start": 109.89,
+          "end": 110.03
+        },
+        {
+          "text": "て",
+          "start": 110.03,
+          "end": 110.16
+        },
+        {
+          "text": "見",
+          "start": 110.16,
+          "end": 110.3
+        },
+        {
+          "text": "え",
+          "start": 110.3,
+          "end": 110.44
+        },
+        {
+          "text": "る",
+          "start": 110.44,
+          "end": 110.57
+        },
+        {
+          "text": "偽",
+          "start": 110.57,
+          "end": 110.71
+        },
+        {
+          "text": "善",
+          "start": 110.71,
+          "end": 110.84
+        },
+        {
+          "text": "に",
+          "start": 110.84,
+          "end": 111
+        },
+        {
+          "text": "天",
+          "start": 111,
+          "end": 111.16
+        },
+        {
+          "text": "罰",
+          "start": 111.16,
+          "end": 111.46
+        }
+      ],
+      "romajiText": "suke te mieru gizen ni tembatsu"
+    },
+    {
+      "start": 111.52,
+      "end": 113.22,
+      "text": "Tell me why tell me why tell me why tell me",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "Tell ",
+          "start": 111.52,
+          "end": 111.66
+        },
+        {
+          "text": "me ",
+          "start": 111.66,
+          "end": 111.8
+        },
+        {
+          "text": "why ",
+          "start": 111.8,
+          "end": 111.94
+        },
+        {
+          "text": "tell ",
+          "start": 111.94,
+          "end": 112.08
+        },
+        {
+          "text": "me ",
+          "start": 112.08,
+          "end": 112.2
+        },
+        {
+          "text": "why ",
+          "start": 112.2,
+          "end": 112.33
+        },
+        {
+          "text": "tell ",
+          "start": 112.33,
+          "end": 112.47
+        },
+        {
+          "text": "me ",
+          "start": 112.47,
+          "end": 112.6
+        },
+        {
+          "text": "why ",
+          "start": 112.6,
+          "end": 112.75
+        },
+        {
+          "text": "tell ",
+          "start": 112.75,
+          "end": 112.92
+        },
+        {
+          "text": "me",
+          "start": 112.92,
+          "end": 113.22
+        }
+      ],
+      "romajiText": "Tell me why tell me why tell me why tell me"
+    },
+    {
+      "start": 113.21,
+      "end": 114.74,
+      "text": "I don't need you",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "I ",
+          "start": 113.21,
+          "end": 113.5
+        },
+        {
+          "text": "don't ",
+          "start": 113.5,
+          "end": 113.99
+        },
+        {
+          "text": "need ",
+          "start": 113.99,
+          "end": 114.44
+        },
+        {
+          "text": "you",
+          "start": 114.44,
+          "end": 114.74
+        }
+      ],
+      "romajiText": "I don't need you"
+    },
+    {
+      "start": 115.06,
+      "end": 116.7,
+      "text": "逸材の花より",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "逸",
+          "start": 115.06,
+          "end": 115.36
+        },
+        {
+          "text": "材",
+          "start": 115.36,
+          "end": 115.68
+        },
+        {
+          "text": "の",
+          "start": 115.68,
+          "end": 115.82
+        },
+        {
+          "text": "花",
+          "start": 115.82,
+          "end": 116.15
+        },
+        {
+          "text": "よ",
+          "start": 116.15,
+          "end": 116.4
+        },
+        {
+          "text": "り",
+          "start": 116.4,
+          "end": 116.7
+        }
+      ],
+      "romajiText": "itsuzai no hana yori"
+    },
+    {
+      "start": 116.81,
+      "end": 120.32,
+      "text": "挑み続け咲いた一輪が美しい",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "挑",
+          "start": 116.81,
+          "end": 117.09
+        },
+        {
+          "text": "み",
+          "start": 117.09,
+          "end": 117.22
+        },
+        {
+          "text": "続",
+          "start": 117.22,
+          "end": 117.5
+        },
+        {
+          "text": "け",
+          "start": 117.5,
+          "end": 117.65
+        },
+        {
+          "text": "咲",
+          "start": 117.65,
+          "end": 117.8
+        },
+        {
+          "text": "い",
+          "start": 117.8,
+          "end": 117.93
+        },
+        {
+          "text": "た",
+          "start": 117.93,
+          "end": 118.09
+        },
+        {
+          "text": "一",
+          "start": 118.09,
+          "end": 118.4
+        },
+        {
+          "text": "輪",
+          "start": 118.4,
+          "end": 118.59
+        },
+        {
+          "text": "が",
+          "start": 118.59,
+          "end": 118.89
+        },
+        {
+          "text": "美",
+          "start": 118.89,
+          "end": 119.73
+        },
+        {
+          "text": "し",
+          "start": 119.73,
+          "end": 120.02
+        },
+        {
+          "text": "い",
+          "start": 120.02,
+          "end": 120.32
+        }
+      ],
+      "romajiText": "idomi tsuzuke sai ta ichirin ga utsukushii"
+    },
+    {
+      "start": 120.81,
+      "end": 123.51,
+      "text": "乱暴に敷き詰められた",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "乱",
+          "start": 120.81,
+          "end": 121.17
+        },
+        {
+          "text": "暴",
+          "start": 121.17,
+          "end": 121.57
+        },
+        {
+          "text": "に",
+          "start": 121.57,
+          "end": 121.97
+        },
+        {
+          "text": "敷",
+          "start": 121.97,
+          "end": 122.17
+        },
+        {
+          "text": "き",
+          "start": 122.17,
+          "end": 122.42
+        },
+        {
+          "text": "詰",
+          "start": 122.42,
+          "end": 122.62
+        },
+        {
+          "text": "め",
+          "start": 122.62,
+          "end": 122.9
+        },
+        {
+          "text": "ら",
+          "start": 122.9,
+          "end": 123.04
+        },
+        {
+          "text": "れ",
+          "start": 123.04,
+          "end": 123.21
+        },
+        {
+          "text": "た",
+          "start": 123.21,
+          "end": 123.51
+        }
+      ],
+      "romajiText": "rambou ni shikitsume rare ta"
+    },
+    {
+      "start": 123.57,
+      "end": 125.32,
+      "text": "トゲだらけの道も",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "ト",
+          "start": 123.57,
+          "end": 123.72
+        },
+        {
+          "text": "ゲ",
+          "start": 123.72,
+          "end": 123.87
+        },
+        {
+          "text": "だ",
+          "start": 123.87,
+          "end": 124.09
+        },
+        {
+          "text": "ら",
+          "start": 124.09,
+          "end": 124.28
+        },
+        {
+          "text": "け",
+          "start": 124.28,
+          "end": 124.47
+        },
+        {
+          "text": "の",
+          "start": 124.47,
+          "end": 124.7
+        },
+        {
+          "text": "道",
+          "start": 124.7,
+          "end": 125.02
+        },
+        {
+          "text": "も",
+          "start": 125.02,
+          "end": 125.32
+        }
+      ],
+      "romajiText": "toge darake no michi mo"
+    },
+    {
+      "start": 125.39,
+      "end": 129.36,
+      "text": "本気の僕だけに現れるから",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "本",
+          "start": 125.39,
+          "end": 125.74
+        },
+        {
+          "text": "気",
+          "start": 125.74,
+          "end": 125.88
+        },
+        {
+          "text": "の",
+          "start": 125.88,
+          "end": 126.2
+        },
+        {
+          "text": "僕",
+          "start": 126.2,
+          "end": 126.49
+        },
+        {
+          "text": "だ",
+          "start": 126.49,
+          "end": 126.69
+        },
+        {
+          "text": "け",
+          "start": 126.69,
+          "end": 126.91
+        },
+        {
+          "text": "に",
+          "start": 126.91,
+          "end": 127.09
+        },
+        {
+          "text": "現",
+          "start": 127.09,
+          "end": 128.23
+        },
+        {
+          "text": "れ",
+          "start": 128.23,
+          "end": 128.54
+        },
+        {
+          "text": "る",
+          "start": 128.54,
+          "end": 128.83
+        },
+        {
+          "text": "か",
+          "start": 128.83,
+          "end": 129.06
+        },
+        {
+          "text": "ら",
+          "start": 129.06,
+          "end": 129.36
+        }
+      ],
+      "romajiText": "honki no boku dake ni arawareru kara"
+    },
+    {
+      "start": 129.82,
+      "end": 132.75,
+      "text": "乗り越えてみせるよ",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "乗",
+          "start": 129.82,
+          "end": 130.02
+        },
+        {
+          "text": "り",
+          "start": 130.02,
+          "end": 130.26
+        },
+        {
+          "text": "越",
+          "start": 130.26,
+          "end": 130.47
+        },
+        {
+          "text": "え",
+          "start": 130.47,
+          "end": 130.7
+        },
+        {
+          "text": "て",
+          "start": 130.7,
+          "end": 131.6
+        },
+        {
+          "text": "み",
+          "start": 131.6,
+          "end": 132
+        },
+        {
+          "text": "せ",
+          "start": 132,
+          "end": 132.21
+        },
+        {
+          "text": "る",
+          "start": 132.21,
+          "end": 132.45
+        },
+        {
+          "text": "よ",
+          "start": 132.45,
+          "end": 132.75
+        }
+      ],
+      "romajiText": "norikoe te miseru yo"
+    },
+    {
+      "start": 134.88,
+      "end": 137.76,
+      "text": "簡単に片付けられた",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "簡",
+          "start": 134.88,
+          "end": 135.37
+        },
+        {
+          "text": "単",
+          "start": 135.37,
+          "end": 135.79
+        },
+        {
+          "text": "に",
+          "start": 135.79,
+          "end": 136.23
+        },
+        {
+          "text": "片",
+          "start": 136.23,
+          "end": 136.67
+        },
+        {
+          "text": "付",
+          "start": 136.67,
+          "end": 136.9
+        },
+        {
+          "text": "け",
+          "start": 136.9,
+          "end": 137.15
+        },
+        {
+          "text": "ら",
+          "start": 137.15,
+          "end": 137.32
+        },
+        {
+          "text": "れ",
+          "start": 137.32,
+          "end": 137.46
+        },
+        {
+          "text": "た",
+          "start": 137.46,
+          "end": 137.76
+        }
+      ],
+      "romajiText": "kantan ni katazuke rare ta"
+    },
+    {
+      "start": 137.8,
+      "end": 139.59,
+      "text": "守れなかった夢も",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "守",
+          "start": 137.8,
+          "end": 138.09
+        },
+        {
+          "text": "れ",
+          "start": 138.09,
+          "end": 138.31
+        },
+        {
+          "text": "な",
+          "start": 138.31,
+          "end": 138.5
+        },
+        {
+          "text": "か",
+          "start": 138.5,
+          "end": 138.6
+        },
+        {
+          "text": "っ",
+          "start": 138.6,
+          "end": 138.7
+        },
+        {
+          "text": "た",
+          "start": 138.7,
+          "end": 138.92
+        },
+        {
+          "text": "夢",
+          "start": 138.92,
+          "end": 139.29
+        },
+        {
+          "text": "も",
+          "start": 139.29,
+          "end": 139.59
+        }
+      ],
+      "romajiText": "mamore nakatsu ta yume mo"
+    },
+    {
+      "start": 139.63,
+      "end": 143.62,
+      "text": "紅蓮の心臓に根を生やし",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "紅",
+          "start": 139.63,
+          "end": 139.81
+        },
+        {
+          "text": "蓮",
+          "start": 139.81,
+          "end": 140.41
+        },
+        {
+          "text": "の",
+          "start": 140.41,
+          "end": 140.87
+        },
+        {
+          "text": "心",
+          "start": 140.87,
+          "end": 141.37
+        },
+        {
+          "text": "臓",
+          "start": 141.37,
+          "end": 142.03
+        },
+        {
+          "text": "に",
+          "start": 142.03,
+          "end": 142.48
+        },
+        {
+          "text": "根",
+          "start": 142.48,
+          "end": 142.62
+        },
+        {
+          "text": "を",
+          "start": 142.62,
+          "end": 142.85
+        },
+        {
+          "text": "生",
+          "start": 142.85,
+          "end": 143.04
+        },
+        {
+          "text": "や",
+          "start": 143.04,
+          "end": 143.32
+        },
+        {
+          "text": "し",
+          "start": 143.32,
+          "end": 143.62
+        }
+      ],
+      "romajiText": "guren no shinzou ni ne o hayashi"
+    },
+    {
+      "start": 144.05,
+      "end": 149.87,
+      "text": "この血に宿ってる",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "こ",
+          "start": 144.05,
+          "end": 144.45
+        },
+        {
+          "text": "の",
+          "start": 144.45,
+          "end": 144.67
+        },
+        {
+          "text": "血",
+          "start": 144.67,
+          "end": 144.89
+        },
+        {
+          "text": "に",
+          "start": 144.89,
+          "end": 145.67
+        },
+        {
+          "text": "宿",
+          "start": 145.67,
+          "end": 146.15
+        },
+        {
+          "text": "っ",
+          "start": 146.15,
+          "end": 146.37
+        },
+        {
+          "text": "て",
+          "start": 146.37,
+          "end": 149.57
+        },
+        {
+          "text": "る",
+          "start": 149.57,
+          "end": 149.87
+        }
+      ],
+      "romajiText": "kono chi ni yadotteru"
+    },
+    {
+      "start": 161.83,
+      "end": 168,
+      "text": "人知れず儚い散りゆく結末",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "人",
+          "start": 161.83,
+          "end": 162.68
+        },
+        {
+          "text": "知",
+          "start": 162.68,
+          "end": 162.89
+        },
+        {
+          "text": "れ",
+          "start": 162.89,
+          "end": 163.41
+        },
+        {
+          "text": "ず",
+          "start": 163.41,
+          "end": 163.64
+        },
+        {
+          "text": "儚",
+          "start": 163.64,
+          "end": 164.47
+        },
+        {
+          "text": "い",
+          "start": 164.47,
+          "end": 165.3
+        },
+        {
+          "text": "散",
+          "start": 165.3,
+          "end": 165.52
+        },
+        {
+          "text": "り",
+          "start": 165.52,
+          "end": 166.19
+        },
+        {
+          "text": "ゆ",
+          "start": 166.19,
+          "end": 166.41
+        },
+        {
+          "text": "く",
+          "start": 166.41,
+          "end": 167.1
+        },
+        {
+          "text": "結",
+          "start": 167.1,
+          "end": 167.7
+        },
+        {
+          "text": "末",
+          "start": 167.7,
+          "end": 168
+        }
+      ],
+      "romajiText": "hitoshirezu hakanai chiri yuku ketsumatsu"
+    },
+    {
+      "start": 168.92,
+      "end": 175.41,
+      "text": "無情に破れた悲鳴の風吹く",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "無",
+          "start": 168.92,
+          "end": 169.12
+        },
+        {
+          "text": "情",
+          "start": 169.12,
+          "end": 170.04
+        },
+        {
+          "text": "に",
+          "start": 170.04,
+          "end": 170.72
+        },
+        {
+          "text": "破",
+          "start": 170.72,
+          "end": 171.29
+        },
+        {
+          "text": "れ",
+          "start": 171.29,
+          "end": 171.59
+        },
+        {
+          "text": "た",
+          "start": 171.59,
+          "end": 172.44
+        },
+        {
+          "text": "悲",
+          "start": 172.44,
+          "end": 172.67
+        },
+        {
+          "text": "鳴",
+          "start": 172.67,
+          "end": 173.56
+        },
+        {
+          "text": "の",
+          "start": 173.56,
+          "end": 174.23
+        },
+        {
+          "text": "風",
+          "start": 174.23,
+          "end": 174.83
+        },
+        {
+          "text": "吹",
+          "start": 174.83,
+          "end": 175.11
+        },
+        {
+          "text": "く",
+          "start": 175.11,
+          "end": 175.41
+        }
+      ],
+      "romajiText": "mujou ni yabure ta himei no kaze fuku"
+    },
+    {
+      "start": 176.06,
+      "end": 182.23,
+      "text": "誰かの笑う影誰かの泣き声",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "誰",
+          "start": 176.06,
+          "end": 176.88
+        },
+        {
+          "text": "か",
+          "start": 176.88,
+          "end": 177.11
+        },
+        {
+          "text": "の",
+          "start": 177.11,
+          "end": 177.85
+        },
+        {
+          "text": "笑",
+          "start": 177.85,
+          "end": 178.17
+        },
+        {
+          "text": "う",
+          "start": 178.17,
+          "end": 178.4
+        },
+        {
+          "text": "影",
+          "start": 178.4,
+          "end": 179.48
+        },
+        {
+          "text": "誰",
+          "start": 179.48,
+          "end": 180.4
+        },
+        {
+          "text": "か",
+          "start": 180.4,
+          "end": 180.63
+        },
+        {
+          "text": "の",
+          "start": 180.63,
+          "end": 181.34
+        },
+        {
+          "text": "泣",
+          "start": 181.34,
+          "end": 181.54
+        },
+        {
+          "text": "き",
+          "start": 181.54,
+          "end": 181.93
+        },
+        {
+          "text": "声",
+          "start": 181.93,
+          "end": 182.23
+        }
+      ],
+      "romajiText": "dareka no warau kage dareka no nakigoe"
+    },
+    {
+      "start": 182.54,
+      "end": 187.16,
+      "text": "誰もが幸せを願ってる",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "誰",
+          "start": 182.54,
+          "end": 183.09
+        },
+        {
+          "text": "も",
+          "start": 183.09,
+          "end": 183.31
+        },
+        {
+          "text": "が",
+          "start": 183.31,
+          "end": 184.02
+        },
+        {
+          "text": "幸",
+          "start": 184.02,
+          "end": 184.78
+        },
+        {
+          "text": "せ",
+          "start": 184.78,
+          "end": 185.03
+        },
+        {
+          "text": "を",
+          "start": 185.03,
+          "end": 185.76
+        },
+        {
+          "text": "願",
+          "start": 185.76,
+          "end": 186.34
+        },
+        {
+          "text": "っ",
+          "start": 186.34,
+          "end": 186.68
+        },
+        {
+          "text": "て",
+          "start": 186.68,
+          "end": 186.86
+        },
+        {
+          "text": "る",
+          "start": 186.86,
+          "end": 187.16
+        }
+      ],
+      "romajiText": "dare mo ga shiawase o negatteru"
+    },
+    {
+      "start": 188.23,
+      "end": 191.09,
+      "text": "どうしたって消せない夢も",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "ど",
+          "start": 188.23,
+          "end": 188.42
+        },
+        {
+          "text": "う",
+          "start": 188.42,
+          "end": 188.6
+        },
+        {
+          "text": "し",
+          "start": 188.6,
+          "end": 188.74
+        },
+        {
+          "text": "た",
+          "start": 188.74,
+          "end": 188.91
+        },
+        {
+          "text": "っ",
+          "start": 188.91,
+          "end": 189.07
+        },
+        {
+          "text": "て",
+          "start": 189.07,
+          "end": 189.58
+        },
+        {
+          "text": "消",
+          "start": 189.58,
+          "end": 189.76
+        },
+        {
+          "text": "せ",
+          "start": 189.76,
+          "end": 190.01
+        },
+        {
+          "text": "な",
+          "start": 190.01,
+          "end": 190.15
+        },
+        {
+          "text": "い",
+          "start": 190.15,
+          "end": 190.38
+        },
+        {
+          "text": "夢",
+          "start": 190.38,
+          "end": 190.79
+        },
+        {
+          "text": "も",
+          "start": 190.79,
+          "end": 191.09
+        }
+      ],
+      "romajiText": "dou shi ta tte kese nai yume mo"
+    },
+    {
+      "start": 191.18,
+      "end": 192.92,
+      "text": "止まれない今も",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "止",
+          "start": 191.18,
+          "end": 191.38
+        },
+        {
+          "text": "ま",
+          "start": 191.38,
+          "end": 191.61
+        },
+        {
+          "text": "れ",
+          "start": 191.61,
+          "end": 191.86
+        },
+        {
+          "text": "な",
+          "start": 191.86,
+          "end": 191.98
+        },
+        {
+          "text": "い",
+          "start": 191.98,
+          "end": 192.23
+        },
+        {
+          "text": "今",
+          "start": 192.23,
+          "end": 192.62
+        },
+        {
+          "text": "も",
+          "start": 192.62,
+          "end": 192.92
+        }
+      ],
+      "romajiText": "tomare nai ima mo"
+    },
+    {
+      "start": 192.94,
+      "end": 196.94,
+      "text": "誰かのために強くなれるなら",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "誰",
+          "start": 192.94,
+          "end": 193.33
+        },
+        {
+          "text": "か",
+          "start": 193.33,
+          "end": 193.48
+        },
+        {
+          "text": "の",
+          "start": 193.48,
+          "end": 193.84
+        },
+        {
+          "text": "た",
+          "start": 193.84,
+          "end": 193.99
+        },
+        {
+          "text": "め",
+          "start": 193.99,
+          "end": 194.23
+        },
+        {
+          "text": "に",
+          "start": 194.23,
+          "end": 194.44
+        },
+        {
+          "text": "強",
+          "start": 194.44,
+          "end": 194.87
+        },
+        {
+          "text": "く",
+          "start": 194.87,
+          "end": 195.31
+        },
+        {
+          "text": "な",
+          "start": 195.31,
+          "end": 195.74
+        },
+        {
+          "text": "れ",
+          "start": 195.74,
+          "end": 196.09
+        },
+        {
+          "text": "る",
+          "start": 196.09,
+          "end": 196.42
+        },
+        {
+          "text": "な",
+          "start": 196.42,
+          "end": 196.64
+        },
+        {
+          "text": "ら",
+          "start": 196.64,
+          "end": 196.94
+        }
+      ],
+      "romajiText": "dare ka no tame ni tsuyoku nareru nara"
+    },
+    {
+      "start": 197.36,
+      "end": 200.28,
+      "text": "ありがとう悲しみよ",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "あ",
+          "start": 197.36,
+          "end": 197.79
+        },
+        {
+          "text": "り",
+          "start": 197.79,
+          "end": 198
+        },
+        {
+          "text": "が",
+          "start": 198,
+          "end": 198.24
+        },
+        {
+          "text": "と",
+          "start": 198.24,
+          "end": 198.56
+        },
+        {
+          "text": "う",
+          "start": 198.56,
+          "end": 198.89
+        },
+        {
+          "text": "悲",
+          "start": 198.89,
+          "end": 199.55
+        },
+        {
+          "text": "し",
+          "start": 199.55,
+          "end": 199.74
+        },
+        {
+          "text": "み",
+          "start": 199.74,
+          "end": 199.98
+        },
+        {
+          "text": "よ",
+          "start": 199.98,
+          "end": 200.28
+        }
+      ],
+      "romajiText": "arigatou kanashimi yo"
+    },
+    {
+      "start": 202.45,
+      "end": 205.38,
+      "text": "世界に打ちのめされて",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "世",
+          "start": 202.45,
+          "end": 202.85
+        },
+        {
+          "text": "界",
+          "start": 202.85,
+          "end": 203.31
+        },
+        {
+          "text": "に",
+          "start": 203.31,
+          "end": 203.81
+        },
+        {
+          "text": "打",
+          "start": 203.81,
+          "end": 203.99
+        },
+        {
+          "text": "ち",
+          "start": 203.99,
+          "end": 204.25
+        },
+        {
+          "text": "の",
+          "start": 204.25,
+          "end": 204.46
+        },
+        {
+          "text": "め",
+          "start": 204.46,
+          "end": 204.73
+        },
+        {
+          "text": "さ",
+          "start": 204.73,
+          "end": 204.94
+        },
+        {
+          "text": "れ",
+          "start": 204.94,
+          "end": 205.08
+        },
+        {
+          "text": "て",
+          "start": 205.08,
+          "end": 205.38
+        }
+      ],
+      "romajiText": "sekai ni uchinomesa re te"
+    },
+    {
+      "start": 205.35,
+      "end": 207.08,
+      "text": "負ける意味を知った",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "負",
+          "start": 205.35,
+          "end": 205.5
+        },
+        {
+          "text": "け",
+          "start": 205.5,
+          "end": 205.64
+        },
+        {
+          "text": "る",
+          "start": 205.64,
+          "end": 205.86
+        },
+        {
+          "text": "意",
+          "start": 205.86,
+          "end": 206.06
+        },
+        {
+          "text": "味",
+          "start": 206.06,
+          "end": 206.26
+        },
+        {
+          "text": "を",
+          "start": 206.26,
+          "end": 206.46
+        },
+        {
+          "text": "知",
+          "start": 206.46,
+          "end": 206.62
+        },
+        {
+          "text": "っ",
+          "start": 206.62,
+          "end": 206.78
+        },
+        {
+          "text": "た",
+          "start": 206.78,
+          "end": 207.08
+        }
+      ],
+      "romajiText": "makeru imi o shitta"
+    },
+    {
+      "start": 207.14,
+      "end": 211.12,
+      "text": "紅蓮の華よ咲き誇れ",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "紅",
+          "start": 207.14,
+          "end": 207.31
+        },
+        {
+          "text": "蓮",
+          "start": 207.31,
+          "end": 207.9
+        },
+        {
+          "text": "の",
+          "start": 207.9,
+          "end": 208.43
+        },
+        {
+          "text": "華",
+          "start": 208.43,
+          "end": 208.89
+        },
+        {
+          "text": "よ",
+          "start": 208.89,
+          "end": 209.56
+        },
+        {
+          "text": "咲",
+          "start": 209.56,
+          "end": 209.96
+        },
+        {
+          "text": "き",
+          "start": 209.96,
+          "end": 210.34
+        },
+        {
+          "text": "誇",
+          "start": 210.34,
+          "end": 210.82
+        },
+        {
+          "text": "れ",
+          "start": 210.82,
+          "end": 211.12
+        }
+      ],
+      "romajiText": "guren no hana yo sakihokore"
+    },
+    {
+      "start": 211.6,
+      "end": 214.25,
+      "text": "運命を照らして",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "運",
+          "start": 211.6,
+          "end": 211.99
+        },
+        {
+          "text": "命",
+          "start": 211.99,
+          "end": 212.43
+        },
+        {
+          "text": "を",
+          "start": 212.43,
+          "end": 213.26
+        },
+        {
+          "text": "照",
+          "start": 213.26,
+          "end": 213.48
+        },
+        {
+          "text": "ら",
+          "start": 213.48,
+          "end": 213.81
+        },
+        {
+          "text": "し",
+          "start": 213.81,
+          "end": 213.95
+        },
+        {
+          "text": "て",
+          "start": 213.95,
+          "end": 214.25
+        }
+      ],
+      "romajiText": "ummei o terashi te"
+    },
+    {
+      "start": 222.48,
+      "end": 224.98,
+      "text": "運命を照らして",
+      "isDuet": false,
+      "words": [
+        {
+          "text": "運",
+          "start": 222.48,
+          "end": 222.75
+        },
+        {
+          "text": "命",
+          "start": 222.75,
+          "end": 223.12
+        },
+        {
+          "text": "を",
+          "start": 223.12,
+          "end": 224.03
+        },
+        {
+          "text": "照",
+          "start": 224.03,
+          "end": 224.22
+        },
+        {
+          "text": "ら",
+          "start": 224.22,
+          "end": 224.53
+        },
+        {
+          "text": "し",
+          "start": 224.53,
+          "end": 224.68
+        },
+        {
+          "text": "て",
+          "start": 224.68,
+          "end": 224.98
+        }
+      ],
+      "romajiText": "ummei o terashi te"
+    }
+  ]
+}

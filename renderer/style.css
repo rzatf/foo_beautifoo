@@ -1,0 +1,285 @@
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    background: 
+        radial-gradient(circle at 100% 100%, rgba(0, 106, 74, 0.4) 0%, transparent 60%),
+        radial-gradient(circle at 0% 0%, rgba(0, 38, 22, 0.4) 0%, transparent 60%),
+        rgba(0, 0, 0, 1);
+    background-blend-mode: normal;
+    color: rgba(255, 255, 255, 1);
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    overflow: hidden;
+}
+
+
+/* ============================================================
+   CONTAINER
+   ============================================================ */
+
+#lyrics {
+    width: 100%;
+    height: 100%;
+
+    overflow-y: auto;
+
+    scrollbar-width: none;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    /*
+        50vh di atas dan bawah supaya
+        baris pertama/terakhir bisa berada di tengah.
+    */
+    padding: 50vh 10%;
+
+    gap: 28px;
+}
+
+#lyrics::-webkit-scrollbar {
+    display: none;
+}
+
+
+/* ============================================================
+   BASE LYRIC LINE
+   ============================================================ */
+
+.lyric-line {
+    position: relative;
+
+    font-size: 36px;
+    font-weight: 700;
+
+    line-height: 1.4;
+
+    /*
+        Warna dasar kata yang belum dinyanyikan.
+    */
+    color: rgba(255, 255, 255, 0.35);
+
+    opacity: 0.4;
+
+    filter: blur(1.5px);
+
+    transform: scale(0.95);
+
+    transform-origin: left center;
+
+    transition:
+        opacity 300ms ease,
+        filter 300ms ease,
+        transform 300ms ease;
+}
+
+
+/* ============================================================
+   ACTIVE LINE
+   ============================================================ */
+
+/* Baris Aktif Standar (Plain Line & Container Karaoke) */
+.lyric-line.active {
+    color: rgba(255, 255, 255, 1); /* Warna teks penuh saat aktif */
+    opacity: 1;
+    filter: blur(0px);
+    transform: scale(1.04);
+}
+
+/* Styling Khusus Plain LRC (Glow Menyala Terang) */
+.mode-plain .lyric-line.active {
+    color: rgba(255, 255, 255, 1);
+    opacity: 1;
+    transform: scale(1.04);
+    
+    background: none;
+    -webkit-text-fill-color: initial;
+    
+    /* Glow effect tebal */
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.5),
+                 0 0 24px rgba(255, 255, 255, 0.2);
+}
+
+
+/* ============================================================
+   PAST LINE
+   ============================================================ */
+
+.lyric-line.past {
+    opacity: 0.25;
+
+    filter: blur(1.5px);
+
+    transform: scale(0.95);
+}
+
+
+/* ============================================================
+   FUTURE LINE
+   ============================================================ */
+
+.lyric-line.future {
+    opacity: 0.4;
+
+    filter: blur(1.5px);
+
+    transform: scale(0.95);
+}
+
+
+/* ============================================================
+   WORD / SYLLABLE (SAFE SOLID RENDERING UNTUK WEBVIEW2)
+   ============================================================ */
+
+.word {
+    display: inline-block;
+
+    white-space: pre;
+
+    font-size: 36px;
+    font-weight: 700;
+
+    line-height: 1.4;
+
+    padding: 4px 0;
+
+    /* Warna dasar kata sebelum dinyanyikan (terang dan aman) */
+    color: rgba(255, 255, 255, 0.35);
+
+    transition:
+        color 100ms ease,
+        transform 150ms ease,
+        filter 150ms ease;
+
+    will-change: color, transform;
+}
+
+
+/* ============================================================
+   WORD SEDANG DINYANYIKAN
+   ============================================================ */
+
+.lyric-line.active .word.word-active {
+    color: rgba(255, 255, 255, 1);
+    transform: scale(1.05);
+
+    filter:
+        drop-shadow(
+            0 0 10px
+            rgba(255, 255, 255, 0.6)
+        );
+}
+
+
+/* ============================================================
+   WORD SUDAH SELESAI
+   ============================================================ */
+
+.lyric-line.active .word.word-passed {
+    color: rgba(255, 255, 255, 1);
+    transform: scale(1);
+
+    filter: none;
+}
+
+
+/* ============================================================
+   WORD BELUM AKTIF DI BARIS AKTIF
+   ============================================================ */
+
+.lyric-line.active .word:not(.word-active):not(.word-passed) {
+    color: rgba(255, 255, 255, 0.35);
+    transform: scale(1);
+
+    filter: none;
+}
+
+
+/* ============================================================
+   DUET / BACKGROUND VOCAL
+   ============================================================ */
+
+.lyric-line.duet {
+    align-self: flex-end;
+
+    text-align: right;
+
+    transform-origin: right center;
+
+    font-style: italic;
+}
+
+
+/* ============================================================
+   TOGGLE ROMAJI BUTTON (FIXED BOTTOM CENTER)
+   ============================================================ */
+
+#toggle-romaji {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 44px;
+    height: 44px;
+
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 20px;
+    font-weight: 900;
+    font-family: inherit;
+
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    z-index: 100;
+
+    opacity: 0.4;
+    transition: all 250ms ease;
+
+    outline: none;
+}
+
+#toggle-romaji:hover {
+    opacity: 1;
+    color: rgba(255, 255, 255, 1);
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
+    transform: translateX(-50%) scale(1.08);
+}
+
+#toggle-romaji.active {
+    opacity: 0.5;
+    color: rgba(255, 255, 255, 1);
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+#toggle-romaji.active:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+    transform: translateX(-50%) scale(1.08);
+}
