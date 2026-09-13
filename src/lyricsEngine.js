@@ -56,10 +56,15 @@ async function getLyrics(metadata) {
     ];
 
 
-    console.log("[Engine] Mencari lirik dari semua provider secara concurrent...");
+    console.log(
+        "[Engine] Mencari lirik dari semua provider secara concurrent..."
+    );
 
 
-    // Jalankan SEMUA provider secara bersamaan
+    // =========================================================
+    // JALANKAN SEMUA PROVIDER
+    // =========================================================
+
     const results = await Promise.all(
         providers.map(async (provider) => {
 
@@ -68,25 +73,36 @@ async function getLyrics(metadata) {
                 const raw = await provider.fetch(metadata);
 
                 if (!raw) {
-                    console.log(`[Engine] ${provider.name}: tidak ada hasil`);
+                    console.log(
+                        `[Engine] ${provider.name}: tidak ada hasil`
+                    );
+
                     return null;
                 }
 
-                const lyrics = provider.parse(raw);
 
-                if (!lyrics) {
-                    console.log(`[Engine] ${provider.name}: gagal parse`);
+                const parsed = provider.parse(raw);
+
+                if (!parsed) {
+                    console.log(
+                        `[Engine] ${provider.name}: gagal parse`
+                    );
+
                     return null;
                 }
+
 
                 console.log(
-                    `[Engine] ${provider.name}: ${lyrics.type}`
+                    `[Engine] ${provider.name}: hasil parse`,
+                    parsed
                 );
+
 
                 return {
                     provider: provider.name,
-                    lyrics
+                    parsed
                 };
+
 
             } catch (e) {
 
@@ -103,53 +119,134 @@ async function getLyrics(metadata) {
 
 
     // =========================================================
-    // PILIH KARAOKE BERDASARKAN PRIORITAS PROVIDER
+    // KUMPULKAN SEMUA KANDIDAT
     // =========================================================
 
-    let selectedLyrics = null;
-    let fallbackLineLyrics = null;
+    const karaokeCandidates = [];
+    const lineCandidates = [];
 
 
     for (const result of results) {
 
-        if (!result) {
-            continue;
-        }
+        if (!result) continue;
 
-        const lyrics = result.lyrics;
+        const { provider, parsed } = result;
 
 
-        // Karaoke selalu lebih diutamakan
-        if (lyrics.type === "karaoke") {
+        // -----------------------------------------------------
+        // FORMAT BARU:
+        // {
+        //     karaoke: {...},
+        //     line: {...}
+        // }
+        // -----------------------------------------------------
 
-            selectedLyrics = lyrics;
+        if (parsed.karaoke) {
+
+            karaokeCandidates.push({
+                provider,
+                lyrics: parsed.karaoke
+            });
 
             console.log(
-                `[Engine] Karaoke terpilih dari ${result.provider}`
+                `[Engine] ${provider}: kandidat KARAOKE ditemukan`
             );
-
-            break;
         }
 
 
-        // Simpan line lyrics pertama berdasarkan prioritas
-        if (!fallbackLineLyrics) {
+        if (parsed.line) {
 
-            fallbackLineLyrics = lyrics;
+            lineCandidates.push({
+                provider,
+                lyrics: parsed.line
+            });
 
             console.log(
-                `[Engine] Line lyrics fallback dari ${result.provider}`
+                `[Engine] ${provider}: kandidat LINE ditemukan`
+            );
+        }
+
+
+        // -----------------------------------------------------
+        // FORMAT LAMA:
+        // {
+        //     type: "karaoke",
+        //     lines: [...]
+        // }
+        // -----------------------------------------------------
+
+        if (parsed.type === "karaoke") {
+
+            karaokeCandidates.push({
+                provider,
+                lyrics: parsed
+            });
+
+            console.log(
+                `[Engine] ${provider}: kandidat KARAOKE ditemukan`
+            );
+        }
+
+
+        if (parsed.type === "line") {
+
+            lineCandidates.push({
+                provider,
+                lyrics: parsed
+            });
+
+            console.log(
+                `[Engine] ${provider}: kandidat LINE ditemukan`
             );
         }
     }
 
 
-    // Karaoke > line lyrics
-    const result = selectedLyrics || fallbackLineLyrics;
+    // =========================================================
+    // PILIH HASIL TERBAIK
+    // =========================================================
+
+    let selected = null;
 
 
-    if (!result) {
-        console.log("[Engine] Tidak ada lirik ditemukan.");
+    // Karaoke selalu menang.
+    // Karena results berasal dari providers yang urutannya
+    // sudah berdasarkan prioritas, kandidat karaoke juga
+    // akan berada dalam urutan prioritas provider.
+
+    if (karaokeCandidates.length > 0) {
+
+        selected = karaokeCandidates[0];
+
+        console.log(
+            `[Engine] Karaoke terpilih dari ${selected.provider}`
+        );
+
+    }
+
+    // Kalau tidak ada karaoke sama sekali,
+    // gunakan line berdasarkan prioritas provider.
+
+    else if (lineCandidates.length > 0) {
+
+        selected = lineCandidates[0];
+
+        console.log(
+            `[Engine] Line lyrics terpilih dari ${selected.provider}`
+        );
+    }
+
+
+    // =========================================================
+    // TIDAK ADA LIRIK
+    // =========================================================
+
+    if (!selected) {
+
+        console.log(
+            "[Engine] Tidak ada lirik ditemukan."
+        );
+
         return null;
     }
 
@@ -158,12 +255,14 @@ async function getLyrics(metadata) {
     // ROMAJI
     // =========================================================
 
-    console.log("[Engine] Mengonversi teks ke Romaji...");
+    console.log(
+        `[Engine] Mengonversi teks ${selected.provider} ke Romaji...`
+    );
 
-    await attachRomajiToLyrics(result);
+    await attachRomajiToLyrics(selected.lyrics);
 
 
-    return result;
+    return selected.lyrics;
 }
 
 
