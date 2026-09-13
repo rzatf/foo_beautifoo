@@ -19,7 +19,7 @@ A dynamic, web-based karaoke lyrics renderer designed to run seamlessly as a pan
 To run this panel, you only need the following installed on your system:
 
 1.  **[foobar2000](https://www.foobar2000.org/)** (v1.5 or v2.0+)
-2.  **[foo_webview2]([https://github.com/miki100/foo_webview2](https://www.foobar2000.org/components/view/foo_webview2))** component installed in foobar2000.
+2.  **[foo_webview2](https://www.foobar2000.org/components/view/foo_webview2)** component installed in foobar2000.
 
 ## 🚀 Installation & Setup
 
