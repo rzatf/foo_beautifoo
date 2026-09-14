@@ -1,43 +1,326 @@
+
 // =============================================================
 // Beaufoo Node Server
 // =============================================================
 
 let beaufooServerStarting = null;
 
-async function ensureBeaufooServer() {
 
-    // ---------------------------------------------------------
-    // 1. Cek apakah server sudah berjalan
-    // ---------------------------------------------------------
+// =============================================================
+// Konfigurasi
+// =============================================================
+
+// server.js berada 2 folder di atas bridge.js.
+//
+// Contoh:
+//
+// Beaufoo/
+// ├── server.js
+// └── folder/
+//     └── bridge/
+//         └── bridge.js
+//
+// Maka:
+// bridge.js
+//   ↓ ..
+// folder/
+//   ↓ ..
+// Beaufoo/
+//   ↓
+// server.js
+
+const BEAUFOO_SERVER_RELATIVE_PATH =
+    "..\\..\\server.js";
+
+const BEAUFOO_SERVER_RELATIVE_DIR =
+    "..\\..";
+
+const BEAUFOO_PORT =
+    3000;
+
+const BEAUFOO_URL =
+    `http://127.0.0.1:${BEAUFOO_PORT}/`;
+
+
+// =============================================================
+// Node.js Candidate Paths
+// =============================================================
+//
+// Urutan:
+// 1. node.exe dari PATH
+// 2. lokasi Node.js standar Windows
+// 3. lokasi Node.js user
+//
+// Kita tidak hardcode username user.
+// =============================================================
+
+function getNodeCandidates() {
+
+    return [
+
+        // -----------------------------------------------------
+        // 1. PATH
+        // -----------------------------------------------------
+
+        "node.exe",
+
+
+        // -----------------------------------------------------
+        // 2. Node.js system installation
+        // -----------------------------------------------------
+
+        "C:\\Program Files\\nodejs\\node.exe",
+
+        "C:\\Program Files (x86)\\nodejs\\node.exe",
+
+
+        // -----------------------------------------------------
+        // 3. Node.js user installation
+        // -----------------------------------------------------
+
+        "%LOCALAPPDATA%\\Programs\\nodejs\\node.exe",
+
+        "%APPDATA%\\npm\\node.exe"
+
+    ];
+}
+
+
+// =============================================================
+// Expand Windows Environment Variable
+// =============================================================
+//
+// Contoh:
+//
+// %LOCALAPPDATA%\Programs\nodejs\node.exe
+//
+// menjadi:
+//
+// C:\Users\NamaUser\AppData\Local\Programs\nodejs\node.exe
+// =============================================================
+
+function expandEnvironmentVariables(path) {
+
+    return path.replace(
+        /%([^%]+)%/g,
+        (_, name) => {
+
+            try {
+
+                return (
+                    window
+                        ?.chrome
+                        ?.webview
+                        ?.hostObjects
+                        ?.sync
+                        ?.foo_uie_webview
+                        ?.getEnvironmentVariable?.(name)
+                    ?? `%${name}%`
+                );
+
+            } catch (err) {
+
+                return `%${name}%`;
+            }
+        }
+    );
+}
+
+
+// =============================================================
+// Check Beaufoo Server
+// =============================================================
+
+async function isBeaufooServerRunning() {
+
     try {
 
         const response = await fetch(
-            "http://127.0.0.1:3000/",
+            BEAUFOO_URL,
             {
                 method: "GET"
             }
         );
 
-        if (response.ok) {
+        return response.ok;
+
+    } catch (err) {
+
+        return false;
+    }
+}
+
+
+// =============================================================
+// Wait Until Beaufoo Server Is Ready
+// =============================================================
+
+async function waitForBeaufooServer(
+    timeout = 6000
+) {
+
+    const startTime =
+        Date.now();
+
+    while (
+        Date.now() - startTime <
+        timeout
+    ) {
+
+        if (
+            await isBeaufooServerRunning()
+        ) {
+
+            return true;
+        }
+
+        await new Promise(
+            resolve =>
+                setTimeout(resolve, 200)
+        );
+    }
+
+    return false;
+}
+
+
+// =============================================================
+// Try Start Beaufoo With Node
+// =============================================================
+
+async function tryStartBeaufooServer(
+    nodePath
+) {
+
+    try {
+
+        console.log(
+            "[Bridge] Mencoba Node.js:",
+            nodePath
+        );
+
+        const result =
+            await fb2k.invoke(
+                "shell.execute",
+                {
+
+                    // -------------------------------------------------
+                    // Node executable
+                    // -------------------------------------------------
+
+                    filePath:
+                        expandEnvironmentVariables(
+                            nodePath
+                        ),
+
+
+                    // -------------------------------------------------
+                    // server.js
+                    // -------------------------------------------------
+                    //
+                    // server.js berada 2 folder di atas bridge.js.
+                    //
+                    // -------------------------------------------------
+
+                    parameters:
+                        `"${BEAUFOO_SERVER_RELATIVE_PATH}"`,
+
+
+                    // -------------------------------------------------
+                    // Working directory
+                    // -------------------------------------------------
+
+                    directoryPath:
+                        BEAUFOO_SERVER_RELATIVE_DIR,
+
+
+                    // -------------------------------------------------
+                    // Windows shell operation
+                    // -------------------------------------------------
+
+                    operation:
+                        "open",
+
+
+                    // -------------------------------------------------
+                    // Jangan tampilkan console window
+                    // -------------------------------------------------
+
+                    showMode:
+                        0
+                }
+            );
+
+        console.log(
+            "[Bridge] shell.execute:",
+            result
+        );
+
+
+        // ---------------------------------------------------------
+        // Tunggu server
+        // ---------------------------------------------------------
+
+        const ready =
+            await waitForBeaufooServer(
+                6000
+            );
+
+        if (ready) {
 
             console.log(
-                "[Bridge] Beaufoo server sudah berjalan."
+                "[Bridge] Beaufoo server berhasil dijalankan."
             );
 
             return true;
         }
 
+
+        console.warn(
+            "[Bridge] Node berhasil dipanggil tetapi server tidak merespons."
+        );
+
+        return false;
+
     } catch (err) {
 
-        console.log(
-            "[Bridge] Beaufoo server belum berjalan."
+        console.warn(
+            "[Bridge] Gagal menjalankan Node:",
+            nodePath,
+            err
         );
+
+        return false;
+    }
+}
+
+
+// =============================================================
+// Ensure Beaufoo Server
+// =============================================================
+
+async function ensureBeaufooServer() {
+
+    // ---------------------------------------------------------
+    // 1. Kalau server sudah hidup
+    // ---------------------------------------------------------
+
+    if (
+        await isBeaufooServerRunning()
+    ) {
+
+        console.log(
+            "[Bridge] Beaufoo server sudah berjalan."
+        );
+
+        return true;
     }
 
 
     // ---------------------------------------------------------
-    // 2. Kalau sedang proses start, jangan start lagi
+    // 2. Kalau sedang ada proses start
     // ---------------------------------------------------------
+
     if (beaufooServerStarting) {
 
         console.log(
@@ -49,103 +332,90 @@ async function ensureBeaufooServer() {
 
 
     // ---------------------------------------------------------
-    // 3. Jalankan Node.js
+    // 3. Mulai proses start
     // ---------------------------------------------------------
-    beaufooServerStarting = (async () => {
 
-        try {
+    beaufooServerStarting =
+        (async () => {
 
-            console.log(
-                "[Bridge] Menjalankan Beaufoo server..."
-            );
+            try {
 
-            const result = await fb2k.invoke(
-                "shell.execute",
-                {
-                    filePath:
-                        "D:\\Application\\NodeJs\\node.exe",
+                console.log(
+                    "[Bridge] Beaufoo server belum berjalan."
+                );
 
-                    parameters:
-                        "C:\\xampp\\htdocs\\beaufoo\\server.js",
-
-                    directoryPath:
-                        "C:\\xampp\\htdocs\\beaufoo",
-
-                    operation:
-                        "open",
-
-                    showMode:
-                        0
-                }
-            );
-
-            console.log(
-                "[Bridge] shell.execute selesai:",
-                result
-            );
+                console.log(
+                    "[Bridge] Mencari Node.js..."
+                );
 
 
-            // -------------------------------------------------
-            // 4. Tunggu server sampai benar-benar hidup
-            // -------------------------------------------------
-            console.log(
-                "[Bridge] Menunggu Beaufoo server..."
-            );
+                const candidates =
+                    getNodeCandidates();
 
-            for (let i = 0; i < 30; i++) {
 
-                try {
+                // -------------------------------------------------
+                // Coba setiap Node.js
+                // -------------------------------------------------
 
-                    const response = await fetch(
-                        "http://127.0.0.1:3000/",
-                        {
-                            method: "GET"
-                        }
+                for (
+                    const nodePath
+                    of candidates
+                ) {
+
+                    console.log(
+                        "[Bridge] Mencoba candidate:",
+                        nodePath
                     );
 
-                    if (response.ok) {
+
+                    const success =
+                        await tryStartBeaufooServer(
+                            nodePath
+                        );
+
+
+                    if (success) {
 
                         console.log(
-                            "[Bridge] Beaufoo server berhasil dijalankan."
+                            "[Bridge] Node.js yang berhasil:",
+                            nodePath
                         );
 
                         return true;
                     }
-
-                } catch (err) {
-                    // Server belum siap
                 }
 
-                await new Promise(resolve =>
-                    setTimeout(resolve, 200)
+
+                // -------------------------------------------------
+                // Semua gagal
+                // -------------------------------------------------
+
+                console.error(
+                    "[Bridge] Tidak dapat menjalankan Beaufoo server."
                 );
+
+                console.error(
+                    "[Bridge] Tidak ditemukan Node.js yang dapat menjalankan server.js."
+                );
+
+                return false;
+
+            } catch (err) {
+
+                console.error(
+                    "[Bridge] Error saat memulai Beaufoo server:",
+                    err
+                );
+
+                return false;
+
+            } finally {
+
+                beaufooServerStarting =
+                    null;
             }
 
-
-            // -------------------------------------------------
-            // 5. Server gagal start
-            // -------------------------------------------------
-            console.error(
-                "[Bridge] Beaufoo server tidak merespons."
-            );
-
-            return false;
-
-        } catch (err) {
-
-            console.error(
-                "[Bridge] Gagal menjalankan Beaufoo server:",
-                err
-            );
-
-            return false;
-
-        } finally {
-
-            beaufooServerStarting = null;
-        }
-
-    })();
+        })();
 
 
     return await beaufooServerStarting;
@@ -162,15 +432,17 @@ async function initFoobarBridge(
 ) {
 
     console.log(
-        "[Bridge] Inisialisasi bridge foobar2000... HALOOOO TEEESSS"
+        "[Bridge] Inisialisasi bridge foobar2000..."
     );
 
 
     // ---------------------------------------------------------
     // 1. Pastikan Beaufoo server hidup
     // ---------------------------------------------------------
+
     const serverReady =
         await ensureBeaufooServer();
+
 
     if (!serverReady) {
 
@@ -183,9 +455,15 @@ async function initFoobarBridge(
     // ---------------------------------------------------------
     // 2. Ambil host object WebView2
     // ---------------------------------------------------------
+
     const host =
-        window.chrome?.webview?.hostObjects?.sync
+        window
+            .chrome
+            ?.webview
+            ?.hostObjects
+            ?.sync
             ?.foo_uie_webview;
+
 
     if (host) {
 
@@ -234,6 +512,7 @@ async function initFoobarBridge(
     // ---------------------------------------------------------
     // 3. Pasang event foobar2000
     // ---------------------------------------------------------
+
     if (window.fb2k) {
 
         console.log(
@@ -299,12 +578,12 @@ async function initFoobarBridge(
 
     // ---------------------------------------------------------
     // 4. Request lagu yang sedang diputar
-    //
-    // Penting:
-    // Saat WebView refresh, trackChanged belum tentu terpanggil.
-    // Jadi kita ambil metadata lagu sekarang secara langsung.
     // ---------------------------------------------------------
-    if (window.fb2k && onTrackChange) {
+
+    if (
+        window.fb2k &&
+        onTrackChange
+    ) {
 
         try {
 
@@ -319,6 +598,7 @@ async function initFoobarBridge(
                 "[Bridge] Current track:",
                 metadata
             );
+
 
             if (
                 metadata.title &&
@@ -353,6 +633,7 @@ async function initFoobarBridge(
     // ---------------------------------------------------------
     // 5. Initial playback position
     // ---------------------------------------------------------
+
     if (host) {
 
         try {
@@ -385,7 +666,11 @@ async function initFoobarBridge(
     // ---------------------------------------------------------
     // 6. Playback position polling
     // ---------------------------------------------------------
-    if (host && onTimeUpdate) {
+
+    if (
+        host &&
+        onTimeUpdate
+    ) {
 
         let lastPosition = -1;
 
@@ -396,9 +681,13 @@ async function initFoobarBridge(
                 const position =
                     Number(host.position) || 0;
 
-                if (position !== lastPosition) {
+                if (
+                    position !==
+                    lastPosition
+                ) {
 
-                    lastPosition = position;
+                    lastPosition =
+                        position;
 
                     onTimeUpdate(
                         position
@@ -414,6 +703,7 @@ async function initFoobarBridge(
             }
 
         }, 50);
+
 
         console.log(
             "[Bridge] Playback position polling aktif."
@@ -441,6 +731,7 @@ async function getTrackMetadata() {
             }
         );
 
+
     const artist =
         await fb2k.invoke(
             "playback.getFormattedText",
@@ -448,6 +739,7 @@ async function getTrackMetadata() {
                 text: "%artist%"
             }
         );
+
 
     const album =
         await fb2k.invoke(
@@ -464,11 +756,17 @@ async function getTrackMetadata() {
     // ---------------------------------------------------------
     // Ambil duration dari host.length
     // ---------------------------------------------------------
+
     try {
 
         const host =
-            window.chrome?.webview?.hostObjects?.sync
+            window
+                .chrome
+                ?.webview
+                ?.hostObjects
+                ?.sync
                 ?.foo_uie_webview;
+
 
         if (host) {
 
@@ -488,6 +786,7 @@ async function getTrackMetadata() {
     // ---------------------------------------------------------
     // Fallback duration dari foobar
     // ---------------------------------------------------------
+
     if (!duration) {
 
         try {
@@ -496,9 +795,11 @@ async function getTrackMetadata() {
                 await fb2k.invoke(
                     "playback.getFormattedText",
                     {
-                        text: "%length_seconds_fp%"
+                        text:
+                            "%length_seconds_fp%"
                     }
                 );
+
 
             duration =
                 Number(durationText) || 0;
@@ -542,3 +843,4 @@ if (
         initFoobarBridge
     };
 }
+
