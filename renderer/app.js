@@ -1,502 +1,339 @@
+
+// ============================================================
+// Beaufoo - app.js
+// ============================================================
+
+// ============================================================
+// STATE
+// ============================================================
+
 let currentLyrics = null;
-
 let currentTime = 0;
-
 let isPlaying = false;
-
 let isUserScrolling = false;
-
 let userScrollTimeout = null;
-
 let isProgrammaticScroll = false;
-
 let lastActiveLineIndex = -1;
-
+let lastScrollLineIndex = -1;
 let isRomajiMode = false;
+let foobarTime = 0;
+let lastFoobarUpdate = performance.now();
+let staggerTimeoutId = null;
 
 const container = document.getElementById("lyrics");
-
-const romajiBtn =
-    document.getElementById("toggle-romaji");
+const romajiBtn = document.getElementById("toggle-romaji");
 
 
 // ============================================================
-// HELPER: DETEKSI SCRIPT
+// TEXT / SCRIPT HELPERS
 // ============================================================
 
 function isCJKOrJapanese(text) {
-    if (!text) {
-        return false;
-    }
-
-    return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(
-        text
-    );
+    if (!text) return false;
+    return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text);
 }
 
 function isKorean(text) {
-    if (!text) {
-        return false;
-    }
-
-    return /[\uac00-\ud7af\u1100-\u11ff\u3130-\u318f]/.test(
-        text
-    );
+    if (!text) return false;
+    return /[\uac00-\ud7af\u1100-\u11ff\u3130-\u318f]/.test(text);
 }
 
 function isAsianScript(text) {
-    return (
-        isCJKOrJapanese(text) ||
-        isKorean(text)
-    );
+    return isCJKOrJapanese(text) || isKorean(text);
 }
 
+function shouldAddWordSpace(previousText, currentText) {
+    if (!previousText || !currentText) return false;
 
-// ============================================================
-// HELPER: SPASI ANTAR WORD KARAOKE
-// ============================================================
+    const current = currentText.trimStart();
 
-function shouldAddWordSpace(
-    previousText,
-    currentText
-) {
-    if (!previousText) {
+    // Jangan kasih spasi untuk CJK / Japanese / Korean
+    if (isAsianScript(previousText) || isAsianScript(currentText)) {
         return false;
     }
 
-    if (!currentText) {
+    // Punctuation
+    if (/^[,.;:!?%)\]}]/.test(current)) {
         return false;
     }
 
-    const current =
-        currentText.trimStart();
-
-
-    // --------------------------------------------------------
-    // JAPANG / CINA / KOREA
-    //
-    // Jangan tambahkan spasi antar karakter/word.
-    //
-    // Contoh:
-    // 可 + 愛 + く + て
-    //
-    // menjadi:
-    // 可愛くて
-    //
-    // bukan:
-    // 可 愛 く て
-    // --------------------------------------------------------
-
-    if (
-        isAsianScript(previousText) ||
-        isAsianScript(currentText)
-    ) {
+    // Apostrophe
+    if (current.startsWith("'") || current.startsWith("’")) {
         return false;
     }
 
-
-    // --------------------------------------------------------
-    // TANDA BACA
-    //
-    // Tanda baca harus menempel ke kata sebelumnya.
-    // --------------------------------------------------------
-
-    const punctuation =
-        /^[,.;:!?%)\]}]/;
-
-    if (punctuation.test(current)) {
+    // Kalau word sebelumnya sudah punya spasi
+    if (/\s$/.test(previousText)) {
         return false;
     }
-
-
-    // --------------------------------------------------------
-    // APOSTROPHE
-    //
-    // don't
-    // I'm
-    // you're
-    // --------------------------------------------------------
-
-    if (
-        current.startsWith("'") ||
-        current.startsWith("’")
-    ) {
-        return false;
-    }
-
-
-    // --------------------------------------------------------
-    // Jika word sebelumnya sudah punya spasi
-    // jangan tambahkan lagi.
-    // --------------------------------------------------------
-
-    if (
-        /\s$/.test(previousText)
-    ) {
-        return false;
-    }
-
-
-    // --------------------------------------------------------
-    // LATIN
-    //
-    // Word normal tetap diberi spasi.
-    //
-    // But + you
-    // menjadi:
-    // But you
-    // --------------------------------------------------------
 
     return true;
 }
 
-
-// ============================================================
-// HELPER: DETEKSI APAKAH LINE ADALAH LATIN
-// ============================================================
-
 function isLatinLikeText(text) {
-    if (!text) {
-        return false;
-    }
-
+    if (!text) return false;
     return !isAsianScript(text);
 }
 
 
 // ============================================================
-// HELPER: GET ORIGINAL KARAOKE WORDS
+// KARAOKE WORD HELPERS
 // ============================================================
 
 function getOriginalWords(line) {
-    if (
-        !line ||
-        !Array.isArray(line.words)
-    ) {
+    if (!line || !Array.isArray(line.words)) {
         return [];
     }
 
-    return line.words.filter(
-        word =>
-            word &&
-            typeof word.text === "string" &&
-            word.text.length > 0
+    return line.words.filter(word =>
+        word &&
+        typeof word.text === "string" &&
+        word.text.length > 0
     );
 }
 
 
-// ============================================================
-// HELPER: CALCULATE ROMAJI WORD TIMING
-// ============================================================
-
 function getRomajiWordsWithTiming(line) {
-
     if (!line || !line.romajiText) {
         return [];
     }
 
+    const romajiTokens = line.romajiText
+        .split(/\s+/)
+        .filter(Boolean);
 
-    // --------------------------------------------------------
-    // Ambil token romaji.
-    //
-    // Contoh:
-    //
-    // "kawaii kute"
-    //
-    // menjadi:
-    //
-    // ["kawaii", "kute"]
-    // --------------------------------------------------------
-
-    const romajiTokens =
-        line.romajiText
-            .split(/\s+/)
-            .filter(Boolean);
-
-
-    if (
-        romajiTokens.length === 0
-    ) {
+    if (romajiTokens.length === 0) {
         return [];
     }
 
+    const origWords = getOriginalWords(line);
 
-    const origWords =
-        getOriginalWords(line);
-
-
-    // --------------------------------------------------------
-    // Tidak ada timing word asli.
-    // --------------------------------------------------------
-
-    if (
-        origWords.length === 0
-    ) {
-        return romajiTokens.map(
-            token => ({
-                text: token,
-                start: line.start,
-                end: line.end
-            })
-        );
+    // Tidak ada timing original
+    if (origWords.length === 0) {
+        return romajiTokens.map(token => ({
+            text: token,
+            start: line.start,
+            end: line.end
+        }));
     }
 
-
-    // --------------------------------------------------------
-    // Jumlah token sama dengan word asli.
-    //
-    // Paling ideal karena timing bisa
-    // dipasangkan langsung.
-    // --------------------------------------------------------
-
-    if (
-        romajiTokens.length ===
-        origWords.length
-    ) {
-        return romajiTokens.map(
-            (token, idx) => ({
-                text: token,
-                start:
-                    origWords[idx].start,
-                end:
-                    origWords[idx].end
-            })
-        );
+    // Jumlah token romaji sama dengan jumlah word original
+    if (romajiTokens.length === origWords.length) {
+        return romajiTokens.map((token, idx) => ({
+            text: token,
+            start: origWords[idx].start,
+            end: origWords[idx].end
+        }));
     }
 
+    // Fallback:
+    // Distribusikan timing berdasarkan panjang token romaji
+    const totalDuration = line.end - line.start;
 
-    // --------------------------------------------------------
-    // FALLBACK
-    //
-    // Jumlah token romaji berbeda dengan
-    // jumlah word asli.
-    //
-    // Distribusikan timing berdasarkan
-    // panjang token.
-    // --------------------------------------------------------
-
-    const totalDuration =
-        line.end - line.start;
-
-    const lineStart =
-        line.start;
-
-    const totalChars =
-        romajiTokens.reduce(
-            (acc, token) =>
-                acc + token.length,
-            0
-        );
-
-    let currentStart =
-        lineStart;
-
-
-    return romajiTokens.map(
-        token => {
-
-            const weight =
-                totalChars > 0
-                    ? token.length /
-                      totalChars
-                    : 1 /
-                      romajiTokens.length;
-
-            const duration =
-                totalDuration * weight;
-
-            const wordStart =
-                currentStart;
-
-            const wordEnd =
-                wordStart + duration;
-
-            currentStart =
-                wordEnd;
-
-
-            return {
-                text: token,
-                start: wordStart,
-                end: wordEnd
-            };
-        }
+    const totalChars = romajiTokens.reduce(
+        (acc, token) => acc + token.length,
+        0
     );
+
+    let currentStart = line.start;
+
+    return romajiTokens.map(token => {
+        const weight =
+            totalChars > 0
+                ? token.length / totalChars
+                : 1 / romajiTokens.length;
+
+        const duration = totalDuration * weight;
+
+        const wordStart = currentStart;
+        const wordEnd = wordStart + duration;
+
+        currentStart = wordEnd;
+
+        return {
+            text: token,
+            start: wordStart,
+            end: wordEnd
+        };
+    });
 }
 
 
-// ============================================================
-// HELPER: ROMAJI KARAOKE WORDS
-// ============================================================
-//
-// Kalau lagu Latin:
-//   jangan gunakan line.romajiText yang mungkin sudah
-//   kehilangan spasi karena proses backend.
-//
-// Gunakan word asli.
-//
-// Kalau Jepang/Cina/Korea:
-//   gunakan hasil romanization.
-//
+function getDisplayWords(lyricsData, line) {
+    const originalWords = getOriginalWords(line);
 
-function getDisplayWords(
-    lyricsData,
-    line
-) {
-    const originalWords =
-        getOriginalWords(line);
-
-
-    // --------------------------------------------------------
     // Bukan mode romaji
-    // --------------------------------------------------------
-
-    if (!isRomajiMode) {
+    if (!isRomajiMode || !line.romajiText) {
         return originalWords;
     }
 
+    const originalText = originalWords
+        .map(word => word.text)
+        .join("");
 
-    // --------------------------------------------------------
-    // Tidak ada romaji
-    // --------------------------------------------------------
-
-    if (!line.romajiText) {
+    // Latin tidak perlu diganti ke romaji
+    if (isLatinLikeText(originalText)) {
         return originalWords;
     }
 
-
-    // --------------------------------------------------------
-    // Cari tahu apakah teks aslinya Asian Script.
-    //
-    // Kita cek gabungan word asli, bukan line.text,
-    // karena line.text dari provider karaoke bisa saja
-    // memiliki spacing yang aneh.
-    // --------------------------------------------------------
-
-    const originalText =
-        originalWords
-            .map(word => word.text)
-            .join("");
-
-
-    // --------------------------------------------------------
-    // LATIN
-    //
-    // Tidak perlu romanization.
-    //
-    // Jangan menggunakan:
-    //
-    // line.romajiText
-    //
-    // karena romaji.js sekarang mungkin menghasilkan:
-    //
-    // Butyouturnedinto...
-    //
-    // Gunakan word asli agar spacing tetap benar.
-    // --------------------------------------------------------
-
-    if (
-        isLatinLikeText(originalText)
-    ) {
-        return originalWords;
-    }
-
-
-    // --------------------------------------------------------
-    // NON-LATIN
-    //
-    // Gunakan hasil romanization.
-    // --------------------------------------------------------
-
-    return getRomajiWordsWithTiming(
-        line
-    );
+    return getRomajiWordsWithTiming(line);
 }
 
 
 // ============================================================
-// 1. DETEKSI USER SCROLL
+// LONG GAP HANDLER
+// ============================================================
+//
+// Gap > 3 detik:
+//
+// previous lyric
+//       |
+//       | +0.65
+//       v
+//      ...
+//       |
+//       | sampai next.start - 0.65
+//       v
+//   next lyric
+//
+// Synthetic "..." TIDAK menjadi active lyric.
+//
+// Timing:
+//
+// gapStart = previous.end + 0.65
+// gapEnd   = next.start - 0.65
+//
+// Tiga titik akan membagi durasi gap secara merata.
 // ============================================================
 
-container.addEventListener(
-    "wheel",
-    markUserScrolling,
-    {
-        passive: true
+function addLongGapLines(lyricsData) {
+    if (!lyricsData || !Array.isArray(lyricsData.lines)) {
+        return lyricsData;
     }
-);
 
-container.addEventListener(
-    "touchmove",
-    markUserScrolling,
-    {
-        passive: true
+    const newLines = [];
+
+    for (let i = 0; i < lyricsData.lines.length; i++) {
+        const line = lyricsData.lines[i];
+
+        newLines.push(line);
+
+        // Tidak ada next line
+        if (i >= lyricsData.lines.length - 1) {
+            continue;
+        }
+
+        const nextLine = lyricsData.lines[i + 1];
+
+        const gap =
+            nextLine.start -
+            line.end;
+
+        // Hanya gap > 3 detik
+        if (gap > 3) {
+            const gapStart =
+                line.end + 0.65;
+
+            const gapEnd =
+                nextLine.start - 0.65;
+
+            newLines.push({
+                start: gapStart,
+                end: gapEnd,
+
+                text: "...",
+
+                // Penting:
+                // synthetic line sekarang punya word timing
+                words: [
+                    {
+                        text: ".",
+                        start: gapStart,
+                        end: gapStart +
+                            ((gapEnd - gapStart) / 3)
+                    },
+                    {
+                        text: ".",
+                        start: gapStart +
+                            ((gapEnd - gapStart) / 3),
+                        end: gapStart +
+                            ((gapEnd - gapStart) * 2 / 3)
+                    },
+                    {
+                        text: ".",
+                        start: gapStart +
+                            ((gapEnd - gapStart) * 2 / 3),
+                        end: gapEnd
+                    }
+                ],
+
+                isGapLine: true
+            });
+        }
     }
-);
+
+    return {
+        ...lyricsData,
+        lines: newLines
+    };
+}
+
+
+// ============================================================
+// USER SCROLL DETECTION
+// ============================================================
+
+if (container) {
+    container.addEventListener(
+        "wheel",
+        markUserScrolling,
+        { passive: true }
+    );
+
+    container.addEventListener(
+        "touchmove",
+        markUserScrolling,
+        { passive: true }
+    );
+}
 
 
 function markUserScrolling() {
-
     isUserScrolling = true;
 
-
     if (userScrollTimeout) {
-        clearTimeout(
-            userScrollTimeout
-        );
+        clearTimeout(userScrollTimeout);
     }
 
+    userScrollTimeout = setTimeout(() => {
+        isUserScrolling = false;
+    }, 3000);
+}
 
-    userScrollTimeout =
-        setTimeout(
-            () => {
-                isUserScrolling = false;
-            },
-            3000
-        );
+
+if (container) {
+    container.addEventListener("scroll", () => {
+        if (isProgrammaticScroll) {
+            setTimeout(() => {
+                isProgrammaticScroll = false;
+            }, 100);
+        }
+    });
 }
 
 
 // ============================================================
-// 2. DETEKSI PROGRAMMATIC SCROLL
+// RENDER LYRICS DOM
 // ============================================================
 
-container.addEventListener(
-    "scroll",
-    () => {
-
-        if (isProgrammaticScroll) {
-
-            setTimeout(
-                () => {
-                    isProgrammaticScroll =
-                        false;
-                },
-                100
-            );
-        }
-    }
-);
-
-
-// ============================================================
-// 3. RENDER LYRICS KE DOM
-// ============================================================
-
-function renderLyricsDOM(
-    lyricsData
-) {
+function renderLyricsDOM(lyricsData) {
+    if (!container) return;
 
     container.innerHTML = "";
 
-
-    if (
-        !lyricsData ||
-        !lyricsData.lines
-    ) {
+    if (!lyricsData || !lyricsData.lines) {
         return;
     }
-
 
     container.className =
         lyricsData.type === "karaoke"
@@ -504,144 +341,200 @@ function renderLyricsDOM(
             : "mode-plain";
 
 
-    lyricsData.lines.forEach(
-        (line, lineIndex) => {
+    lyricsData.lines.forEach((line, lineIndex) => {
+        const lineEl =
+            document.createElement("div");
 
-            const lineEl =
-                document.createElement(
-                    "div"
+        lineEl.className =
+            `lyric-line future ${line.isDuet ? "duet" : ""}`;
+
+        lineEl.dataset.index = lineIndex;
+
+
+        // --------------------------------------------------------
+        // LONG GAP PLACEHOLDER (DIUBAH AGAR SELALU VISIBLE)
+        // --------------------------------------------------------
+
+        if (line.isGapLine) {
+            lineEl.classList.add("gap-line");
+
+            // Dot gap selalu ditampilkan, tidak di-hide
+            lineEl.style.visibility = "visible";
+            lineEl.style.opacity = "1";
+        }
+
+
+        // --------------------------------------------------------
+        // KARAOKE
+        // --------------------------------------------------------
+
+        if (
+            lyricsData.type === "karaoke" &&
+            Array.isArray(line.words) &&
+            line.words.length > 0
+        ) {
+            const displayWords =
+                getDisplayWords(
+                    lyricsData,
+                    line
                 );
 
-
-            lineEl.className =
-                `lyric-line future ${
-                    line.isDuet
-                        ? "duet"
-                        : ""
-                }`;
+            let previousText = "";
 
 
-            lineEl.dataset.index =
-                lineIndex;
+            displayWords.forEach(word => {
+                const wordSpan =
+                    document.createElement("span");
+
+                wordSpan.className = "word";
+
+                wordSpan.dataset.start =
+                    word.start;
+
+                wordSpan.dataset.end =
+                    word.end;
 
 
-            // =================================================
-            // KARAOKE
-            // =================================================
+                const chars =
+                    Array.from(word.text);
 
-            if (
-                lyricsData.type ===
-                    "karaoke" &&
-                Array.isArray(
-                    line.words
-                ) &&
-                line.words.length > 0
-            ) {
+                const charDuration =
+                    chars.length > 0
+                        ? (word.end - word.start) /
+                          chars.length
+                        : 0;
 
-                const displayWords =
-                    getDisplayWords(
-                        lyricsData,
-                        line
+
+                chars.forEach((char, i) => {
+                    const charSpan =
+                        document.createElement("span");
+
+                    charSpan.className = "char";
+
+                    charSpan.textContent =
+                        char;
+
+                    charSpan.dataset.start =
+                        word.start +
+                        (i * charDuration);
+
+                    charSpan.dataset.end =
+                        word.start +
+                        ((i + 1) * charDuration);
+
+                    wordSpan.appendChild(
+                        charSpan
                     );
+                });
 
 
-                let previousText = "";
-
-
-                displayWords.forEach(
-                    word => {
-
-                        const wordSpan =
-                            document.createElement(
-                                "span"
-                            );
-
-
-                        wordSpan.className =
-                            "word";
-
-
-                        wordSpan.textContent =
-                            word.text;
-
-
-                        wordSpan.dataset.start =
-                            word.start;
-
-
-                        wordSpan.dataset.end =
-                            word.end;
-
-
-                        wordSpan.style.setProperty(
-                            "--progress",
-                            "0%"
-                        );
-
-
-                        // -------------------------------------
-                        // Tambahkan spasi hanya jika memang perlu
-                        // -------------------------------------
-
-                        if (
-                            shouldAddWordSpace(
-                                previousText,
-                                word.text
-                            )
-                        ) {
-
-                            lineEl.appendChild(
-                                document.createTextNode(
-                                    " "
-                                )
-                            );
-                        }
-
-
-                        lineEl.appendChild(
-                            wordSpan
-                        );
-
-
-                        previousText =
-                            word.text;
-                    }
-                );
-            }
-
-
-            // =================================================
-            // LYRIC BIASA
-            // =================================================
-
-            else {
-
-                lineEl.textContent =
-                    (
-                        isRomajiMode &&
-                        line.romajiText
+                // Jangan tambahkan spasi
+                // antar titik pada gap line
+                if (
+                    !line.isGapLine &&
+                    shouldAddWordSpace(
+                        previousText,
+                        word.text
                     )
-                        ? line.romajiText
-                        : line.text;
+                ) {
+                    lineEl.appendChild(
+                        document.createTextNode(" ")
+                    );
+                }
+
+
+                lineEl.appendChild(
+                    wordSpan
+                );
+
+                previousText =
+                    word.text;
+            });
+        }
+
+
+        // --------------------------------------------------------
+        // PLAIN
+        // --------------------------------------------------------
+
+        else {
+            lineEl.textContent =
+                (isRomajiMode && line.romajiText)
+                    ? line.romajiText
+                    : line.text;
+        }
+
+
+        container.appendChild(lineEl);
+    });
+}
+
+
+// ============================================================
+// GAP LINE VISIBILITY
+// ============================================================
+//
+// Placeholder:
+//
+// hidden
+//    |
+//    | previous.end + 0.65
+//    v
+// visible + karaoke
+//    |
+//    | next.start - 0.65
+//    v
+// hidden
+// ============================================================
+
+function updateGapLineVisibility(time) {
+    if (
+        !currentLyrics ||
+        !currentLyrics.lines
+    ) {
+        return;
+    }
+
+    const lineElements =
+        container.querySelectorAll(
+            ".lyric-line"
+        );
+
+    currentLyrics.lines.forEach(
+        (line, index) => {
+            if (!line.isGapLine) {
+                return;
             }
 
+            const el =
+                lineElements[index];
 
-            container.appendChild(
-                lineEl
-            );
+            if (!el) {
+                return;
+            }
+
+            // Memastikan baris gap selalu visible sepanjang lagu
+            el.style.visibility = "visible";
+            el.style.opacity = "1";
         }
     );
 }
 
 
 // ============================================================
-// 4. CARI BARIS AKTIF
+// ACTIVE LINE
+// ============================================================
+//
+// Gap line selalu di-skip.
+//
+// Jadi:
+//
+// previous lyric = active
+// ...            = bukan active
+// next lyric     = active tepat pada start original
 // ============================================================
 
-function getActiveLineIndex(
-    time
-) {
-
+function getActiveLineIndex(time) {
     if (
         !currentLyrics ||
         !currentLyrics.lines
@@ -649,29 +542,27 @@ function getActiveLineIndex(
         return -1;
     }
 
-
     let activeLineIndex = -1;
 
 
     for (
         let i = 0;
-        i <
-        currentLyrics.lines.length;
+        i < currentLyrics.lines.length;
         i++
     ) {
-
         const line =
             currentLyrics.lines[i];
 
 
-        if (
-            time >= line.start
-        ) {
+        // Synthetic "..." tidak pernah active
+        if (line.isGapLine) {
+            continue;
+        }
 
+
+        if (time >= line.start) {
             activeLineIndex = i;
-
         } else {
-
             break;
         }
     }
@@ -682,13 +573,308 @@ function getActiveLineIndex(
 
 
 // ============================================================
-// 5. UPDATE STATUS BARIS
+// SCROLL TRIGGER
+// ============================================================
+//
+// GAP < 1.5
+//     -> next.start - 0.65
+//
+// GAP 1.5 - 3
+//     -> previous.end + 0.65
+//
+// GAP > 3
+//     -> "..." pada previous.end + 0.65
+//     -> next lyric pada next.start - 0.65
 // ============================================================
 
-function updateLineState(
-    activeLineIndex
-) {
+function getScrollLineIndex(time) {
+    if (
+        !currentLyrics ||
+        !currentLyrics.lines
+    ) {
+        return -1;
+    }
 
+    let scrollIndex = -1;
+
+
+    for (
+        let i = 0;
+        i < currentLyrics.lines.length;
+        i++
+    ) {
+        const line =
+            currentLyrics.lines[i];
+
+
+        let triggerTime =
+            line.start - 0.65;
+
+
+        // --------------------------------------------------------
+        // GAP PLACEHOLDER
+        // --------------------------------------------------------
+
+        if (line.isGapLine) {
+            const prevLine =
+                currentLyrics.lines[i - 1];
+
+            if (prevLine) {
+                triggerTime =
+                    prevLine.end + 0.65;
+            }
+        }
+
+
+        // --------------------------------------------------------
+        // REAL LYRIC
+        // --------------------------------------------------------
+
+        else if (i > 0) {
+
+            let previousRealLine = null;
+
+
+            for (
+                let j = i - 1;
+                j >= 0;
+                j--
+            ) {
+                if (
+                    !currentLyrics.lines[j]
+                        .isGapLine
+                ) {
+                    previousRealLine =
+                        currentLyrics.lines[j];
+
+                    break;
+                }
+            }
+
+
+            if (previousRealLine) {
+
+                const gap =
+                    line.start -
+                    previousRealLine.end;
+
+
+                // GAP 1.5 - 3 DETIK
+
+                if (
+                    gap >= 1.5 &&
+                    gap <= 3
+                ) {
+                    triggerTime =
+                        previousRealLine.end +
+                        0.65;
+                }
+
+
+                // GAP > 3 DETIK
+                //
+                // Next lyric tetap menggunakan
+                // start - 0.65
+
+                else if (gap > 3) {
+                    triggerTime =
+                        line.start -
+                        0.65;
+                }
+            }
+        }
+
+
+        triggerTime =
+            Math.max(
+                0,
+                triggerTime
+            );
+
+
+        if (time >= triggerTime) {
+            scrollIndex = i;
+        } else {
+            break;
+        }
+    }
+
+
+    return scrollIndex;
+}
+
+
+// ============================================================
+// SCROLL ANIMATION
+// ============================================================
+
+function scrollToActiveLine(scrollLineIndex) {
+    if (isUserScrolling) {
+        return;
+    }
+
+
+    const lineElements =
+        container.querySelectorAll(
+            ".lyric-line"
+        );
+
+
+    const activeEl =
+        lineElements[scrollLineIndex];
+
+
+    if (!activeEl) {
+        return;
+    }
+
+
+    const targetScrollTop =
+        activeEl.offsetTop -
+        (container.clientHeight / 2) +
+        (activeEl.clientHeight / 2);
+
+
+    const startScrollTop =
+        container.scrollTop;
+
+
+    const delta =
+        startScrollTop -
+        targetScrollTop;
+
+
+    if (Math.abs(delta) < 2) {
+        return;
+    }
+
+
+    isProgrammaticScroll = true;
+
+
+    if (staggerTimeoutId) {
+        clearTimeout(
+            staggerTimeoutId
+        );
+
+        staggerTimeoutId = null;
+    }
+
+
+    // ------------------------------------------------------------
+    // LARGE JUMP
+    // ------------------------------------------------------------
+
+    if (Math.abs(delta) > 800) {
+
+        container.scrollTop =
+            targetScrollTop;
+
+
+        lineElements.forEach(el => {
+            el.style.transition = "";
+
+            el.style.setProperty(
+                "--y-offset",
+                "0px"
+            );
+        });
+
+
+        setTimeout(() => {
+            isProgrammaticScroll =
+                false;
+        }, 50);
+
+
+        return;
+    }
+
+
+    // ------------------------------------------------------------
+    // FASE 1
+    // ------------------------------------------------------------
+
+    lineElements.forEach(el => {
+        el.style.transition =
+            `translate 0s,
+             opacity 300ms ease,
+             filter 300ms ease,
+             transform 300ms ease`;
+
+        el.style.setProperty(
+            "--y-offset",
+            `${-delta}px`
+        );
+    });
+
+
+    // ------------------------------------------------------------
+    // FASE 2
+    // ------------------------------------------------------------
+
+    container.scrollTop =
+        targetScrollTop;
+
+    void container.offsetHeight;
+
+
+    // ------------------------------------------------------------
+    // FASE 3
+    // ------------------------------------------------------------
+
+    lineElements.forEach(
+        (el, index) => {
+
+            const relativeIndex =
+                index -
+                (scrollLineIndex - 5);
+
+
+            const delay =
+                Math.max(
+                    0,
+                    relativeIndex
+                ) * 0.035;
+
+
+            el.style.transition =
+                `translate 700ms cubic-bezier(0.42, 0, 0.58, 1) ${delay}s,
+                 opacity 300ms ease,
+                 filter 300ms ease,
+                 transform 300ms ease`;
+
+
+            el.style.setProperty(
+                "--y-offset",
+                "0px"
+            );
+        }
+    );
+
+
+    staggerTimeoutId =
+        setTimeout(() => {
+
+            lineElements.forEach(
+                el => {
+                    el.style.transition =
+                        "";
+                }
+            );
+
+            isProgrammaticScroll =
+                false;
+
+        }, 1500);
+}
+
+
+// ============================================================
+// LINE STATE
+// ============================================================
+
+function updateLineState(activeLineIndex) {
     const lineElements =
         container.querySelectorAll(
             ".lyric-line"
@@ -705,9 +891,30 @@ function updateLineState(
             );
 
 
-            // -----------------------------------------------
-            // BARIS SUDAH LEWAT
-            // -----------------------------------------------
+            const line =
+                currentLyrics?.lines[index];
+
+
+            // ----------------------------------------------------
+            // GAP LINE
+            // ----------------------------------------------------
+            //
+            // Jangan ikut state active/past/future
+            // karena dia punya styling sendiri.
+            // ----------------------------------------------------
+
+            if (line?.isGapLine) {
+                el.classList.add(
+                    "future"
+                );
+
+                return;
+            }
+
+
+            // ----------------------------------------------------
+            // PAST
+            // ----------------------------------------------------
 
             if (
                 index <
@@ -720,43 +927,40 @@ function updateLineState(
 
 
                 if (
-                    currentLyrics &&
-                    currentLyrics.type ===
-                        "karaoke"
+                    currentLyrics?.type ===
+                    "karaoke"
                 ) {
 
-                    const wordSpans =
-                        el.querySelectorAll(
-                            ".word"
+                    el.querySelectorAll(
+                        ".word"
+                    ).forEach(w => {
+
+                        w.classList.add(
+                            "word-passed"
+                        );
+
+                        w.classList.remove(
+                            "word-active"
                         );
 
 
-                    wordSpans.forEach(
-                        span => {
+                        w.querySelectorAll(
+                            ".char"
+                        ).forEach(c => {
 
-                            span.style.setProperty(
-                                "--progress",
-                                "100%"
+                            c.classList.add(
+                                "char-active"
                             );
 
-
-                            span.classList.add(
-                                "word-passed"
-                            );
-
-
-                            span.classList.remove(
-                                "word-active"
-                            );
-                        }
-                    );
+                        });
+                    });
                 }
             }
 
 
-            // -----------------------------------------------
-            // BARIS AKTIF
-            // -----------------------------------------------
+            // ----------------------------------------------------
+            // ACTIVE
+            // ----------------------------------------------------
 
             else if (
                 index ===
@@ -769,9 +973,9 @@ function updateLineState(
             }
 
 
-            // -----------------------------------------------
-            // BARIS BELUM LEWAT
-            // -----------------------------------------------
+            // ----------------------------------------------------
+            // FUTURE
+            // ----------------------------------------------------
 
             else {
 
@@ -781,32 +985,30 @@ function updateLineState(
 
 
                 if (
-                    currentLyrics &&
-                    currentLyrics.type ===
-                        "karaoke"
+                    currentLyrics?.type ===
+                    "karaoke"
                 ) {
 
-                    const wordSpans =
-                        el.querySelectorAll(
-                            ".word"
+                    el.querySelectorAll(
+                        ".word"
+                    ).forEach(w => {
+
+                        w.classList.remove(
+                            "word-active",
+                            "word-passed"
                         );
 
 
-                    wordSpans.forEach(
-                        span => {
+                        w.querySelectorAll(
+                            ".char"
+                        ).forEach(c => {
 
-                            span.style.setProperty(
-                                "--progress",
-                                "0%"
+                            c.classList.remove(
+                                "char-active"
                             );
 
-
-                            span.classList.remove(
-                                "word-active",
-                                "word-passed"
-                            );
-                        }
-                    );
+                        });
+                    });
                 }
             }
         }
@@ -815,87 +1017,26 @@ function updateLineState(
 
 
 // ============================================================
-// 6. AUTO SCROLL
-// ============================================================
-
-function scrollToActiveLine(
-    activeLineIndex
-) {
-
-    if (isUserScrolling) {
-        return;
-    }
-
-
-    const lineElements =
-        container.querySelectorAll(
-            ".lyric-line"
-        );
-
-
-    const activeEl =
-        lineElements[
-            activeLineIndex
-        ];
-
-
-    if (!activeEl) {
-        return;
-    }
-
-
-    const targetScrollTop =
-        activeEl.offsetTop -
-        (
-            container.clientHeight /
-            2
-        ) +
-        (
-            activeEl.clientHeight /
-            2
-        );
-
-
-    isProgrammaticScroll =
-        true;
-
-
-    container.scrollTo({
-        top: targetScrollTop,
-        behavior: "smooth"
-    });
-}
-
-
-// ============================================================
-// 7. UPDATE ANIMASI PER KATA
+// WORD / CHARACTER PROGRESS
 // ============================================================
 
 function updateWordProgress(
     time,
     activeLineIndex
 ) {
-
     if (
         !currentLyrics ||
-        currentLyrics.type !==
-            "karaoke" ||
+        currentLyrics.type !== "karaoke" ||
         activeLineIndex === -1
     ) {
         return;
     }
 
 
-    const lineElements =
+    const activeLineEl =
         container.querySelectorAll(
             ".lyric-line"
-        );
-
-
-    const activeLineEl =
-        lineElements[
-            activeLineIndex
-        ];
+        )[activeLineIndex];
 
 
     if (!activeLineEl) {
@@ -903,157 +1044,207 @@ function updateWordProgress(
     }
 
 
-    const wordSpans =
-        activeLineEl.querySelectorAll(
-            ".word"
-        );
-
-
-    wordSpans.forEach(
-        span => {
+    activeLineEl
+        .querySelectorAll(".word")
+        .forEach(wordSpan => {
 
             const wStart =
                 parseFloat(
-                    span.dataset.start
+                    wordSpan.dataset.start
                 );
 
 
             const wEnd =
                 parseFloat(
-                    span.dataset.end
+                    wordSpan.dataset.end
                 );
 
 
-            // ------------------------------------------------
-            // WORD SUDAH SELESAI
-            // ------------------------------------------------
+            // ----------------------------------------------------
+            // WORD PASSED
+            // ----------------------------------------------------
 
-            if (
-                time >= wEnd
-            ) {
+            if (time >= wEnd) {
 
-                span.style.setProperty(
-                    "--progress",
-                    "100%"
-                );
-
-
-                span.classList.add(
+                wordSpan.classList.add(
                     "word-passed"
                 );
 
-
-                span.classList.remove(
+                wordSpan.classList.remove(
                     "word-active"
                 );
+
+
+                wordSpan
+                    .querySelectorAll(".char")
+                    .forEach(c => {
+
+                        c.classList.add(
+                            "char-active"
+                        );
+
+                    });
 
 
                 return;
             }
 
 
-            // ------------------------------------------------
-            // WORD SEDANG DINYANYIKAN
-            // ------------------------------------------------
+            // ----------------------------------------------------
+            // WORD ACTIVE
+            // ----------------------------------------------------
 
             if (
                 time >= wStart &&
                 time < wEnd
             ) {
 
-                const duration =
-                    wEnd - wStart;
-
-
-                if (
-                    duration <= 0
-                ) {
-
-                    span.style.setProperty(
-                        "--progress",
-                        "100%"
-                    );
-
-
-                    span.classList.add(
-                        "word-passed"
-                    );
-
-
-                    span.classList.remove(
-                        "word-active"
-                    );
-
-
-                    return;
-                }
-
-
-                const elapsed =
-                    time - wStart;
-
-
-                const progressPercent =
-                    Math.min(
-                        100,
-                        Math.max(
-                            0,
-                            (
-                                elapsed /
-                                duration
-                            ) *
-                            100
-                        )
-                    );
-
-
-                span.style.setProperty(
-                    "--progress",
-                    `${progressPercent}%`
-                );
-
-
-                span.classList.add(
+                wordSpan.classList.add(
                     "word-active"
                 );
 
-
-                span.classList.remove(
+                wordSpan.classList.remove(
                     "word-passed"
                 );
+
+
+                wordSpan
+                    .querySelectorAll(".char")
+                    .forEach(
+                        charSpan => {
+
+                            const cStart =
+                                parseFloat(
+                                    charSpan.dataset.start
+                                );
+
+
+                            if (
+                                time >=
+                                cStart
+                            ) {
+
+                                charSpan.classList.add(
+                                    "char-active"
+                                );
+
+                            } else {
+
+                                charSpan.classList.remove(
+                                    "char-active"
+                                );
+                            }
+                        }
+                    );
 
 
                 return;
             }
 
 
-            // ------------------------------------------------
-            // WORD BELUM DINYANYIKAN
-            // ------------------------------------------------
+            // ----------------------------------------------------
+            // WORD FUTURE
+            // ----------------------------------------------------
 
-            span.style.setProperty(
-                "--progress",
-                "0%"
-            );
-
-
-            span.classList.remove(
+            wordSpan.classList.remove(
                 "word-active",
                 "word-passed"
             );
-        }
-    );
+
+
+            wordSpan
+                .querySelectorAll(".char")
+                .forEach(c => {
+
+                    c.classList.remove(
+                        "char-active"
+                    );
+
+                });
+        });
 }
 
 
 // ============================================================
-// 8. UPDATE SEMUA UI
+// GAP KARAOKE PROGRESS
+// ============================================================
+//
+// Karena "..." bukan active lyric,
+// progress-nya diproses terpisah.
+//
+// Setiap titik mempunyai timing sendiri.
+//
+// .   -> 0% - 33%
+// .   -> 33% - 66%
+// .   -> 66% - 100%
+//
+// Jadi visualnya tetap terlihat seperti
+// karaoke character animation.
 // ============================================================
 
-function updateLyricsUI(
-    time
-) {
+// ============================================================
+// GAP KARAOKE PROGRESS (FIXED)
+// ============================================================
 
+function updateGapWordProgress(time) {
+    if (!currentLyrics || !currentLyrics.lines) {
+        return;
+    }
+
+    const lineElements = container.querySelectorAll(".lyric-line");
+
+    currentLyrics.lines.forEach((line, index) => {
+        if (!line.isGapLine) {
+            return;
+        }
+
+        const lineEl = lineElements[index];
+        if (!lineEl) {
+            return;
+        }
+
+        const words = lineEl.querySelectorAll(".word");
+
+        words.forEach(wordSpan => {
+            const wStart = parseFloat(wordSpan.dataset.start);
+            const wEnd = parseFloat(wordSpan.dataset.end);
+
+            // Cek apakah waktu saat ini berada di dalam rentang dot atau sudah lewat
+            if (time >= wStart) {
+                wordSpan.classList.add("word-active");
+                wordSpan.classList.remove("word-passed");
+
+                wordSpan.querySelectorAll(".char").forEach(charSpan => {
+                    const cStart = parseFloat(charSpan.dataset.start);
+                    // Biarkan animasi berjalan jika sudah melewati waktu mulai char
+                    if (time >= cStart) {
+                        if (!charSpan.classList.contains("char-active")) {
+                            charSpan.classList.add("char-active");
+                        }
+                    }
+                });
+
+                // Jika waktu sudah melewati akhir dot, ubah ke passed tapi pertahankan state visualnya
+                if (time >= wEnd) {
+                    wordSpan.classList.add("word-passed");
+                    wordSpan.classList.remove("word-active");
+                }
+            } else {
+                // Belum waktunya
+                wordSpan.classList.remove("word-active", "word-passed");
+                wordSpan.querySelectorAll(".char").forEach(c => {
+                    c.classList.remove("char-active");
+                });
+            }
+        });
+    });
+}
+
+// ============================================================
+// MASTER UI UPDATE
+// ============================================================
+
+function updateLyricsUI(time) {
     if (
         !currentLyrics ||
         !currentLyrics.lines
@@ -1062,11 +1253,38 @@ function updateLyricsUI(
     }
 
 
+    // --------------------------------------------------------
+    // GAP VISIBILITY
+    // --------------------------------------------------------
+
+    updateGapLineVisibility(
+        time
+    );
+
+
+    // --------------------------------------------------------
+    // ACTIVE LINE
+    // --------------------------------------------------------
+
     const activeLineIndex =
         getActiveLineIndex(
             time
         );
 
+
+    // --------------------------------------------------------
+    // SCROLL LINE
+    // --------------------------------------------------------
+
+    const scrollLineIndex =
+        getScrollLineIndex(
+            time
+        );
+
+
+    // --------------------------------------------------------
+    // 1. HIGHLIGHT / LINE STATE
+    // --------------------------------------------------------
 
     if (
         activeLineIndex !==
@@ -1077,49 +1295,121 @@ function updateLyricsUI(
             activeLineIndex
         );
 
-
-        if (
-            activeLineIndex !== -1
-        ) {
-
-            scrollToActiveLine(
-                activeLineIndex
-            );
-        }
-
-
         lastActiveLineIndex =
             activeLineIndex;
     }
 
 
+    // --------------------------------------------------------
+    // 2. SCROLL
+    // --------------------------------------------------------
+
+    if (
+        scrollLineIndex !==
+        lastScrollLineIndex
+    ) {
+
+        if (
+            scrollLineIndex !== -1
+        ) {
+
+            scrollToActiveLine(
+                scrollLineIndex
+            );
+        }
+
+
+        lastScrollLineIndex =
+            scrollLineIndex;
+    }
+
+
+    // --------------------------------------------------------
+    // 3. NORMAL KARAOKE
+    // --------------------------------------------------------
+
     updateWordProgress(
         time,
         activeLineIndex
     );
-}
 
 
-// ============================================================
-// 9. PLAYBACK TIME DARI FOOBAR
-// ============================================================
+    // --------------------------------------------------------
+    // 4. GAP KARAOKE
+    // --------------------------------------------------------
 
-function updatePlaybackTime(
-    time
-) {
-
-    currentTime =
-        Number(time) || 0;
-
-
-    updateLyricsUI(
-        currentTime
+    updateGapWordProgress(
+        time
     );
 }
 
 
 // ============================================================
-// 10. TOGGLE ROMAJI
+// PLAYBACK TIME FROM FOOBAR
+// ============================================================
+
+function updatePlaybackTime(time) {
+    foobarTime =
+        Number(time) || 0;
+
+    lastFoobarUpdate =
+        performance.now();
+}
+
+
+// ============================================================
+// 60 FPS RENDER LOOP
+// ============================================================
+
+function renderLoop() {
+
+    if (currentLyrics) {
+
+        const now =
+            performance.now();
+
+
+        const delta =
+            (now - lastFoobarUpdate) /
+            1000;
+
+
+        let interpolatedTime =
+            foobarTime;
+
+
+        // Interpolasi hanya kalau update
+        // foobar masih fresh.
+
+        if (delta < 0.5) {
+            interpolatedTime +=
+                delta;
+        }
+
+
+        currentTime =
+            interpolatedTime;
+
+
+        updateLyricsUI(
+            currentTime
+        );
+    }
+
+
+    requestAnimationFrame(
+        renderLoop
+    );
+}
+
+
+requestAnimationFrame(
+    renderLoop
+);
+
+
+// ============================================================
+// ROMAJI TOGGLE
 // ============================================================
 
 if (romajiBtn) {
@@ -1145,6 +1435,11 @@ if (romajiBtn) {
                 );
 
 
+                updateGapLineVisibility(
+                    currentTime
+                );
+
+
                 updateLineState(
                     lastActiveLineIndex
                 );
@@ -1154,6 +1449,11 @@ if (romajiBtn) {
                     currentTime,
                     lastActiveLineIndex
                 );
+
+
+                updateGapWordProgress(
+                    currentTime
+                );
             }
         }
     );
@@ -1161,84 +1461,42 @@ if (romajiBtn) {
 
 
 // ============================================================
-// 11. LOAD LYRICS
+// LOAD LYRICS
 // ============================================================
 
-function loadLyrics(
-    data
-) {
+function loadLyrics(data) {
 
-    currentLyrics = data;
+    // Tambahkan synthetic "..."
+    // untuk gap > 3 detik.
 
+    currentLyrics =
+        addLongGapLines(
+            data
+        );
+
+
+    foobarTime = 0;
     currentTime = 0;
 
+
     lastActiveLineIndex = -1;
-
-
-    console.log(
-        "[App] Lyrics berhasil dimuat."
-    );
-
-
-    console.log(
-        "[App] Type:",
-        data.type
-    );
-
-
-    console.log(
-        "[App] Source:",
-        data.source
-    );
-
-
-    console.log(
-        "[App] Lines:",
-        data.lines?.length || 0
-    );
-
-
-    console.table(
-        data.lines.map(
-            (line, i) => ({
-                index: i,
-                start: line.start,
-                end: line.end,
-                text: line.text
-            })
-        )
-    );
+    lastScrollLineIndex = -1;
 
 
     renderLyricsDOM(
-        data
+        currentLyrics
     );
 
 
-    updateLyricsUI(
-        currentTime
-    );
+    updateLyricsUI(0);
 }
 
 
 // ============================================================
-// 12. FETCH LYRICS DARI BACKEND
+// FETCH LYRICS
 // ============================================================
 
-async function fetchLyrics(
-    metadata
-) {
-
-    console.log(
-        "[App] Meminta lyrics ke backend..."
-    );
-
-
-    console.log(
-        "[App] Metadata:",
-        metadata
-    );
-
+async function fetchLyrics(metadata) {
 
     try {
 
@@ -1261,32 +1519,7 @@ async function fetchLyrics(
             );
 
 
-        console.log(
-            "[App] Backend HTTP:",
-            res.status
-        );
-
-
         if (!res.ok) {
-
-            let errorData =
-                null;
-
-
-            try {
-
-                errorData =
-                    await res.json();
-
-            } catch (e) {}
-
-
-            console.warn(
-                "[App] Backend gagal:",
-                errorData
-            );
-
-
             return null;
         }
 
@@ -1295,21 +1528,7 @@ async function fetchLyrics(
             await res.json();
 
 
-        console.log(
-            "[App] Response backend:",
-            data
-        );
-
-
-        // ----------------------------------------------------
-        // RESPONSE LANGSUNG
-        //
-        // {
-        //   type: "line",
-        //   source: "...",
-        //   lines: [...]
-        // }
-        // ----------------------------------------------------
+        // Format utama
 
         if (
             data &&
@@ -1318,34 +1537,19 @@ async function fetchLyrics(
                 data.lines
             )
         ) {
-
             return data;
         }
 
 
-        // ----------------------------------------------------
-        // RESPONSE WRAPPER
-        //
-        // {
-        //   success: true,
-        //   lyrics: {...}
-        // }
-        // ----------------------------------------------------
+        // Format legacy
 
         if (
             data &&
             data.success &&
             data.lyrics
         ) {
-
             return data.lyrics;
         }
-
-
-        console.error(
-            "[App] Format response lyrics tidak dikenali:",
-            data
-        );
 
 
         return null;
@@ -1353,10 +1557,9 @@ async function fetchLyrics(
     } catch (err) {
 
         console.error(
-            "[App] Gagal menghubungi backend:",
+            "[App] Gagal fetch lyrics:",
             err
         );
-
 
         return null;
     }
@@ -1364,7 +1567,7 @@ async function fetchLyrics(
 
 
 // ============================================================
-// 13. FOOBAR2000 BRIDGE
+// FOOBAR2000 BRIDGE
 // ============================================================
 
 if (
@@ -1372,89 +1575,33 @@ if (
     "function"
 ) {
 
-    console.log(
-        "[App] Menghubungkan ke foobar2000..."
-    );
-
-
     initFoobarBridge(
 
-        // ====================================================
-        // TRACK BERUBAH
-        // ====================================================
+        // ------------------------------------------------------
+        // TRACK CHANGED
+        // ------------------------------------------------------
 
-        async (
-            trackMetadata
-        ) => {
+        async (trackMetadata) => {
 
-            console.log(
-                "================================"
-            );
+            // Reset lyric sementara
 
+            currentLyrics =
+                null;
 
-            console.log(
-                "[App] TRACK BERUBAH"
-            );
+            container.innerHTML =
+                "";
 
 
-            console.log(
-                "[App] Title:",
-                trackMetadata.title
-            );
+            // Reset active / scroll tracker
+
+            lastActiveLineIndex =
+                -1;
+
+            lastScrollLineIndex =
+                -1;
 
 
-            console.log(
-                "[App] Artist:",
-                trackMetadata.artist
-            );
-
-
-            console.log(
-                "[App] Album:",
-                trackMetadata.album
-            );
-
-
-            console.log(
-                "[App] Duration:",
-                trackMetadata.duration
-            );
-
-
-            console.log(
-                "================================"
-            );
-
-
-            // ------------------------------------------------
-            // RESET LAGU LAMA
-            // ------------------------------------------------
-
-            currentLyrics = null;
-
-            container.innerHTML = "";
-
-            lastActiveLineIndex = -1;
-
-            currentTime = 0;
-
-
-            // ------------------------------------------------
-            // AMBIL LYRICS BARU
-            //
-            // PENTING:
-            //
-            // isRomajiMode TIDAK di-reset.
-            //
-            // Jadi kalau user memang sedang memakai
-            // mode romaji, tombol tetap ON.
-            //
-            // Tapi renderer sekarang bisa membedakan:
-            //
-            // Latin karaoke
-            // vs
-            // Jepang/Cina/Korea karaoke
-            // ------------------------------------------------
+            // Fetch lyric baru
 
             const lyrics =
                 await fetchLyrics(
@@ -1467,24 +1614,13 @@ if (
                 loadLyrics(
                     lyrics
                 );
-
-
-                updateLyricsUI(
-                    currentTime
-                );
-
-            } else {
-
-                console.warn(
-                    "[App] Lyrics tidak ditemukan."
-                );
             }
         },
 
 
-        // ====================================================
-        // PLAYBACK POSITION
-        // ====================================================
+        // ------------------------------------------------------
+        // POSITION UPDATE
+        // ------------------------------------------------------
 
         position => {
 
@@ -1493,15 +1629,5 @@ if (
             );
         }
     );
-
-} else {
-
-    console.warn(
-        "[App] initFoobarBridge tidak ditemukan."
-    );
-
-
-    console.warn(
-        "[App] Pastikan bridge.js dimuat sebelum app.js."
-    );
 }
+

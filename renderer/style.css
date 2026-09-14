@@ -1,3 +1,7 @@
+/* ============================================================
+   GLOBAL
+   ============================================================ */
+
 * {
     box-sizing: border-box;
 }
@@ -10,17 +14,29 @@ body {
 }
 
 body {
-    background: 
-        radial-gradient(circle at 100% 100%, rgba(0, 106, 74, 0.4) 0%, transparent 60%),
-        radial-gradient(circle at 0% 0%, rgba(0, 38, 22, 0.4) 0%, transparent 60%),
+    background:
+        radial-gradient(
+            circle at 100% 100%,
+            rgba(0, 106, 74, 0.4) 0%,
+            transparent 60%
+        ),
+        radial-gradient(
+            circle at 0% 0%,
+            rgba(0, 38, 22, 0.4) 0%,
+            transparent 60%
+        ),
         rgba(0, 0, 0, 1);
+
     background-blend-mode: normal;
+
     color: rgba(255, 255, 255, 1);
+
     font-family:
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
         sans-serif;
+
     overflow: hidden;
 }
 
@@ -34,17 +50,12 @@ body {
     height: 100%;
 
     overflow-y: auto;
-
     scrollbar-width: none;
 
     display: flex;
     flex-direction: column;
     align-items: flex-start;
 
-    /*
-        50vh di atas dan bawah supaya
-        baris pertama/terakhir bisa berada di tengah.
-    */
     padding: 50vh 10%;
 
     gap: 28px;
@@ -64,17 +75,16 @@ body {
 
     font-size: 36px;
     font-weight: 700;
-
     line-height: 1.4;
 
-    /*
-        Warna dasar kata yang belum dinyanyikan.
-    */
     color: rgba(255, 255, 255, 0.35);
 
     opacity: 0.4;
 
     filter: blur(1.5px);
+
+    translate:
+        0 var(--y-offset, 0px);
 
     transform: scale(0.95);
 
@@ -83,7 +93,8 @@ body {
     transition:
         opacity 300ms ease,
         filter 300ms ease,
-        transform 300ms ease;
+        transform 300ms ease,
+        translate 0s;
 }
 
 
@@ -91,45 +102,44 @@ body {
    ACTIVE LINE
    ============================================================ */
 
-/* Baris Aktif Standar (Plain Line & Container Karaoke) */
 .lyric-line.active {
-    color: rgba(255, 255, 255, 1); /* Warna teks penuh saat aktif */
+    color: rgba(255, 255, 255, 1);
+
     opacity: 1;
+
     filter: blur(0px);
+
     transform: scale(1.04);
 }
 
-/* Styling Khusus Plain LRC (Glow Menyala Terang) */
 .mode-plain .lyric-line.active {
     color: rgba(255, 255, 255, 1);
+
     opacity: 1;
+
     transform: scale(1.04);
-    
+
     background: none;
+
     -webkit-text-fill-color: initial;
-    
-    /* Glow effect tebal */
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.5),
-                 0 0 24px rgba(255, 255, 255, 0.2);
+
+    text-shadow:
+        0 0 14px rgba(255, 255, 255, 0.6),
+        0 0 28px rgba(255, 255, 255, 0.3);
 }
 
 
 /* ============================================================
-   PAST LINE
+   PAST & FUTURE LINE
    ============================================================ */
 
 .lyric-line.past {
     opacity: 0.25;
 
-    filter: blur(1.5px);
+    filter: blur(2.5px);
 
     transform: scale(0.95);
 }
-
-
-/* ============================================================
-   FUTURE LINE
-   ============================================================ */
 
 .lyric-line.future {
     opacity: 0.4;
@@ -141,7 +151,7 @@ body {
 
 
 /* ============================================================
-   WORD / SYLLABLE (SAFE SOLID RENDERING UNTUK WEBVIEW2)
+   WORD
    ============================================================ */
 
 .word {
@@ -149,70 +159,281 @@ body {
 
     white-space: pre;
 
-    font-size: 36px;
-    font-weight: 700;
-
-    line-height: 1.4;
-
     padding: 4px 0;
 
-    /* Warna dasar kata sebelum dinyanyikan (terang dan aman) */
+    transition:
+        transform 150ms ease;
+
+    will-change: transform;
+}
+
+.lyric-line.active .word.word-active {
+    transform: scale(1.05);
+}
+
+.lyric-line.active .word.word-passed {
+    transform: scale(1);
+}
+
+.lyric-line.active
+.word:not(.word-active):not(.word-passed) {
+    transform: scale(1);
+}
+
+
+/* ============================================================
+   CHARACTER
+   ============================================================ */
+
+.char {
+    display: inline-block;
+
     color: rgba(255, 255, 255, 0.35);
 
     transition:
-        color 100ms ease,
-        transform 150ms ease,
-        filter 150ms ease;
+        color 50ms ease,
+        text-shadow 50ms ease;
 
-    will-change: color, transform;
+    transform-origin: center bottom;
+
+    will-change:
+        transform,
+        color,
+        text-shadow;
 }
 
-
-/* ============================================================
-   WORD SEDANG DINYANYIKAN
-   ============================================================ */
-
-.lyric-line.active .word.word-active {
+.char.char-active {
     color: rgba(255, 255, 255, 1);
-    transform: scale(1.05);
 
-    filter:
-        drop-shadow(
-            0 0 10px
-            rgba(255, 255, 255, 0.6)
-        );
+    text-shadow:
+        0 0 19px rgba(255, 255, 255, 0.5),
+        0 0 36px rgba(255, 255, 255, 0.2);
+
+    animation:
+        charBounceSpring 1400ms ease-out forwards;
 }
 
 
 /* ============================================================
-   WORD SUDAH SELESAI
+   CHARACTER BOUNCE
    ============================================================ */
 
-.lyric-line.active .word.word-passed {
+@keyframes charBounceSpring {
+
+    0% {
+        transform:
+            scale(1)
+            translateY(0px);
+    }
+
+    30% {
+        transform:
+            scale(1.12)
+            translateY(-0.5px);
+    }
+
+    55% {
+        transform:
+            scale(0.97)
+            translateY(0.05px);
+    }
+
+    75% {
+        transform:
+            scale(1.015)
+            translateY(-0.05px);
+    }
+
+    90% {
+        transform:
+            scale(0.995)
+            translateY(0.005px);
+    }
+
+    100% {
+        transform:
+            scale(1)
+            translateY(0px);
+    }
+}
+
+
+/* ============================================================
+   GAP LINE
+   ============================================================ */
+
+#lyrics .lyric-line.gap-line,
+#lyrics .lyric-line.gap-line.future,
+#lyrics .lyric-line.gap-line.past,
+#lyrics .lyric-line.gap-line.active {
+    min-height: 1.4em;
+    font-size: 36px;
+    font-weight: 700;
     color: rgba(255, 255, 255, 1);
+    opacity: 1 !important;
+    filter: none !important;
     transform: scale(1);
-
-    filter: none;
+    translate: 0 var(--y-offset, 0px);
+    transform-origin: left center;
+    letter-spacing: 0;
+    transition: translate 0s;
+    will-change: translate;
 }
 
 
 /* ============================================================
-   WORD BELUM AKTIF DI BARIS AKTIF
+   GAP WORD
    ============================================================ */
 
-.lyric-line.active .word:not(.word-active):not(.word-passed) {
-    color: rgba(255, 255, 255, 0.35);
-    transform: scale(1);
-
-    filter: none;
+#lyrics .lyric-line.gap-line .word {
+    display: inline-flex;
+    align-items: center;
+    transform: none;
+    padding: 4px 0;
+    gap: 10px;
+    transition: none;
+    will-change: auto;
 }
 
 
 /* ============================================================
-   DUET / BACKGROUND VOCAL
+   GAP CHARACTER / DOT (FIXED)
+   ============================================================ */
+
+#lyrics .lyric-line.gap-line .char {
+    font-size: 0px;
+    color: transparent;
+    display: inline-block !important;
+    width: 14px !important;
+    height: 14px !important;
+    min-width: 14px !important;
+    min-height: 14px !important;
+    aspect-ratio: 1 / 1;
+    flex: 0 0 14px;
+    position: relative;
+    filter: none !important;
+    transform: translateY(0) scale(1);
+    transform-origin: center center;
+    opacity: 0.25;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 50%;
+    text-shadow: none;
+    animation: none;
+    transition:
+        opacity 220ms ease,
+        background 220ms ease,
+        box-shadow 220ms ease;
+}
+
+
+/* ============================================================
+   GAP DOT - BELUM AKTIF
+   ============================================================ */
+
+#lyrics .lyric-line.gap-line
+.char:not(.char-active) {
+    opacity: 0.25;
+    background: rgba(255, 255, 255, 0.22);
+    box-shadow: none;
+    transform: translateY(0) scale(1);
+}
+
+
+/* ============================================================
+   GAP DOT - AKTIF
+   ============================================================ */
+
+#lyrics .lyric-line.gap-line
+.char.char-active {
+    opacity: 1;
+    background: rgba(255, 255, 255, 1);
+    box-shadow:
+        0 0 8px rgba(255, 255, 255, 0.65),
+        0 0 18px rgba(255, 255, 255, 0.30);
+    animation: gapDotFadeBounce 1100ms ease-in-out forwards;
+}
+
+
+/* ============================================================
+   GAP DOT - SUDAH LEWAT
+   ============================================================ */
+
+#lyrics .lyric-line.gap-line
+.word.word-passed
+.char {
+    opacity: 0.72;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.22);
+    transform: translateY(0) scale(1);
+    animation: none;
+}
+
+
+/* ============================================================
+   GAP DOT FADE + BOUNCE
+   ============================================================ */
+
+@keyframes gapDotFadeBounce {
+    0% {
+        opacity: 0;
+        transform: translateY(3px) scale(0.65);
+    }
+    15% {
+        opacity: 0.25;
+        transform: translateY(2px) scale(0.78);
+    }
+    30% {
+        opacity: 0.55;
+        transform: translateY(-2px) scale(1.18);
+    }
+    42% {
+        opacity: 0.78;
+        transform: translateY(-3px) scale(1.28);
+    }
+    55% {
+        opacity: 0.92;
+        transform: translateY(1px) scale(1.08);
+    }
+    70% {
+        opacity: 1;
+        transform: translateY(-0.5px) scale(1.15);
+    }
+    84% {
+        opacity: 1;
+        transform: translateY(0px) scale(0.97);
+    }
+    94% {
+        opacity: 1;
+        transform: translateY(0px) scale(1.02);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0px) scale(1);
+    }
+}
+
+
+/* ============================================================
+   GAP LINE - JANGAN PERNAH BLUR
+   ============================================================ */
+
+#lyrics .gap-line,
+#lyrics .gap-line.future,
+#lyrics .gap-line.past,
+#lyrics .gap-line.active,
+#lyrics .gap-line .word,
+#lyrics .gap-line .char {
+
+    filter: none !important;
+}
+
+
+/* ============================================================
+   DUET
    ============================================================ */
 
 .lyric-line.duet {
+
     align-self: flex-end;
 
     text-align: right;
@@ -224,62 +445,143 @@ body {
 
 
 /* ============================================================
-   TOGGLE ROMAJI BUTTON (FIXED BOTTOM CENTER)
+   ROMAJI TOGGLE
    ============================================================ */
 
 #toggle-romaji {
+
     position: fixed;
+
     bottom: 32px;
+
     left: 50%;
-    transform: translateX(-50%);
+
+    transform:
+        translateX(-50%);
 
     width: 44px;
     height: 44px;
 
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.08);
 
-    color: rgba(255, 255, 255, 0.4);
+    border:
+        1px solid rgba(255, 255, 255, 0.2);
+
+    background:
+        rgba(255, 255, 255, 0.08);
+
+    color:
+        rgba(255, 255, 255, 0.4);
+
     font-size: 20px;
+
     font-weight: 900;
+
     font-family: inherit;
 
     cursor: pointer;
+
     backdrop-filter: blur(8px);
+
     -webkit-backdrop-filter: blur(8px);
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     z-index: 100;
 
     opacity: 0.4;
+
     transition: all 250ms ease;
 
     outline: none;
 }
 
+
+/* ============================================================
+   ROMAJI TOGGLE - HOVER
+   ============================================================ */
+
 #toggle-romaji:hover {
+
     opacity: 1;
-    color: rgba(255, 255, 255, 1);
-    border-color: rgba(255, 255, 255, 0.6);
-    background: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
-    transform: translateX(-50%) scale(1.08);
+
+    color:
+        rgba(255, 255, 255, 1);
+
+    border-color:
+        rgba(255, 255, 255, 0.6);
+
+    background:
+        rgba(255, 255, 255, 0.2);
+
+    box-shadow:
+        0 0 16px rgba(255, 255, 255, 0.3);
+
+    transform:
+        translateX(-50%)
+        scale(1.08);
 }
+
+
+/* ============================================================
+   ROMAJI TOGGLE - ACTIVE
+   ============================================================ */
 
 #toggle-romaji.active {
+
     opacity: 0.5;
-    color: rgba(255, 255, 255, 1);
-    border-color: rgba(255, 255, 255, 0.5);
-    background: rgba(255, 255, 255, 0.15);
+
+    color:
+        rgba(255, 255, 255, 1);
+
+    border-color:
+        rgba(255, 255, 255, 0.2);
+
+    background:
+        rgba(255, 255, 255, 0.08);
 }
 
+
+/* ============================================================
+   ROMAJI TOGGLE - ACTIVE HOVER
+   ============================================================ */
+
 #toggle-romaji.active:hover {
+
     opacity: 1;
-    background: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
-    transform: translateX(-50%) scale(1.08);
+
+    background:
+        rgba(255, 255, 255, 0.3);
+
+    box-shadow:
+        0 0 20px rgba(255, 255, 255, 0.4);
+
+    transform:
+        translateX(-50%)
+        scale(1.08);
+}
+
+
+/* ============================================================
+   SMALL SCREEN
+   ============================================================ */
+
+@media (max-width: 700px) {
+
+    #lyrics .lyric-line.gap-line .char {
+
+        width: 11px;
+        height: 11px;
+
+        flex-basis: 11px;
+    }
+
+    #lyrics .lyric-line.gap-line .word {
+
+        gap: 8px;
+    }
 }
