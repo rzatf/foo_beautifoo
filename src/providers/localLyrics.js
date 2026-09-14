@@ -16,30 +16,19 @@ function getLrcBesideFile(audioPath) {
 }
 
 /**
- * 2. Baca embedded lyrics dari metadata file audio
- */
-async function getEmbeddedLyrics(audioPath) {
-    try {
-        const metadata = await musicMetadata.parseFile(audioPath);
-        const lyrics = metadata.common.lyrics;
-        if (lyrics && lyrics.length > 0) {
-            // Bisa berupa string lirik langsung atau object { text: ... }
-            return typeof lyrics[0] === "string" ? lyrics[0] : lyrics[0].text;
-        }
-    } catch (err) {
-        console.warn("[Local] Gagal membaca metadata embedded:", err.message);
-    }
-    return null;
-}
-
-/**
- * 3. Cari file .lrc yang nyasar di folder induk (rekursif)
+ * 2. Cari file .lrc yang nyasar di folder induk (rekursif)
  */
 function findMisplacedLrc(baseFolder, songFileName) {
     if (!baseFolder || !fs.existsSync(baseFolder)) return null;
 
     const targetName = songFileName.toLowerCase() + ".lrc";
-    const items = fs.readdirSync(baseFolder, { withFileTypes: true });
+    
+    let items;
+    try {
+        items = fs.readdirSync(baseFolder, { withFileTypes: true });
+    } catch (e) {
+        return null; // Abaikan error jika folder tidak bisa diakses
+    }
 
     for (const item of items) {
         const fullPath = path.join(baseFolder, item.name);
@@ -55,6 +44,22 @@ function findMisplacedLrc(baseFolder, songFileName) {
 }
 
 /**
+ * 3. Baca embedded lyrics dari metadata file audio
+ */
+async function getEmbeddedLyrics(audioPath) {
+    try {
+        const metadata = await musicMetadata.parseFile(audioPath);
+        const lyrics = metadata.common.lyrics;
+        if (lyrics && lyrics.length > 0) {
+            return typeof lyrics[0] === "string" ? lyrics[0] : lyrics[0].text;
+        }
+    } catch (err) {
+        console.warn("[Local] Gagal membaca metadata embedded:", err.message);
+    }
+    return null;
+}
+
+/**
  * Main Function Fallback Lokal
  */
 async function getLocalLyrics(metadata) {
@@ -63,22 +68,14 @@ async function getLocalLyrics(metadata) {
 
     const fileNameWithoutExt = path.basename(filePath, path.extname(filePath));
 
-    // Fallback A: File .lrc di sebelah lagu
+    // PRIORITAS 1: File .lrc di sebelah lagu
     const besideLrc = getLrcBesideFile(filePath);
     if (besideLrc) {
         console.log("[Local] Ditemukan file .lrc di sebelah lagu.");
         return besideLrc;
     }
 
-    // Fallback B: Embedded Metadata
-    const embedded = await getEmbeddedLyrics(filePath);
-    if (embedded) {
-        console.log("[Local] Ditemukan Embedded Lyrics di metadata audio.");
-        return embedded;
-    }
-
-    // Fallback C: Cari .lrc nyasar di folder induk (misal folder 'Music' kamu)
-    // Atur `musicRootDir` sesuai lokasi folder utama musikmu
+    // PRIORITAS 2: Cari .lrc nyasar di folder induk
     const musicRootDir = metadata.musicRootDir || path.resolve(filePath, "../../.."); 
     console.log(`[Local] Mencari file ${fileNameWithoutExt}.lrc yang nyasar di: ${musicRootDir}`);
     
@@ -86,6 +83,13 @@ async function getLocalLyrics(metadata) {
     if (misplacedLrc) {
         console.log("[Local] Ditemukan file .lrc yang nyasar di folder lain!");
         return misplacedLrc;
+    }
+
+    // PRIORITAS 3: Embedded Metadata
+    const embedded = await getEmbeddedLyrics(filePath);
+    if (embedded) {
+        console.log("[Local] Ditemukan Embedded Lyrics di metadata audio.");
+        return embedded;
     }
 
     return null;
