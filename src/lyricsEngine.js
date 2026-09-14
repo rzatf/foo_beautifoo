@@ -19,8 +19,8 @@ const { getLyrics: getLrclibLyrics } = require("./providers/lrclib");
 const { parseLrclib } = require("./parsers/lrclibParser");
 
 // Import Provider dan Parser Lokal
-const { getLocalLyrics } = require("./providers/localLyrics");
-const { parseLocalLrc } = require("./parsers/localParser");
+// const { getLocalLyrics } = require("./providers/localLyrics");
+// const { parseLocalLrc } = require("./parsers/localParser");
 
 async function getLyrics(metadata) {
 
@@ -148,31 +148,31 @@ async function getLyrics(metadata) {
     // FALLBACK TERAKHIR: LOKAL & EMBEDDED
     // =========================================================
 
-    if (!selected) {
-        console.log("[Engine] Provider online tidak ada hasil. Mencoba fallback lokal...");
+    // if (!selected) {
+    //     console.log("[Engine] Provider online tidak ada hasil. Mencoba fallback lokal...");
 
-        try {
-            const rawLocal = await getLocalLyrics(metadata);
+    //     try {
+    //         const rawLocal = await getLocalLyrics(metadata);
 
-            if (rawLocal) {
-                const parsedLocal = parseLocalLrc(rawLocal);
+    //         if (rawLocal) {
+    //             const parsedLocal = parseLocalLrc(rawLocal);
 
-                if (parsedLocal && parsedLocal.lines && parsedLocal.lines.length > 0) {
-                    selected = {
-                        provider: "Local Storage / Embedded",
-                        lyrics: parsedLocal
-                    };
-                    console.log("[Engine] Lirik berhasil didapatkan dari file lokal/metadata.");
-                } else {
-                    console.log("[Engine] Local/Embedded: Gagal parse lirik lokal atau lirik kosong");
-                }
-            } else {
-                console.log("[Engine] Local/Embedded: Tidak ada file .lrc atau metadata lirik");
-            }
-        } catch (e) {
-            console.warn("[Engine] Local/Embedded error:", e.message);
-        }
-    }
+    //             if (parsedLocal && parsedLocal.lines && parsedLocal.lines.length > 0) {
+    //                 selected = {
+    //                     provider: "Local Storage / Embedded",
+    //                     lyrics: parsedLocal
+    //                 };
+    //                 console.log("[Engine] Lirik berhasil didapatkan dari file lokal/metadata.");
+    //             } else {
+    //                 console.log("[Engine] Local/Embedded: Gagal parse lirik lokal atau lirik kosong");
+    //             }
+    //         } else {
+    //             console.log("[Engine] Local/Embedded: Tidak ada file .lrc atau metadata lirik");
+    //         }
+    //     } catch (e) {
+    //         console.warn("[Engine] Local/Embedded error:", e.message);
+    //     }
+    // }
 
     // =========================================================
     // TIDAK ADA LIRIK
