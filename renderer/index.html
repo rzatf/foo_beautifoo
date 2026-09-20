@@ -15,20 +15,27 @@
         <!-- Lyrics akan dirender oleh JavaScript -->
     </main>
 
-    <!-- Tombol Toggle Romaji -->
-    <button id="toggle-romaji" title="Toggle Romaji Mode">R</button>
-    <script src="../src/utils/bridge.js"></script>
+    <!-- Kontainer Tombol Kontrol (Offset & Romaji) -->
+    <div id="controls-container">
+        <button id="offset-minus" class="ctrl-btn" title="(-0.5s)">-0.5s</button>
+        
+        <div class="romaji-wrapper">
+            <button id="toggle-romaji" title="Toggle Romaji Mode">R</button>
+            <span id="offset-indicator" class="offset-badge hidden">0.0s</span>
+        </div>
 
+        <button id="offset-plus" class="ctrl-btn" title="(+0.5s)">+0.5s</button>
+    </div>
+
+    <script src="../src/utils/bridge.js"></script>
     <script src="app.js"></script>
-    <!-- Tambahkan script ini sebelum tag tutup </body> di index.html -->
-<script>
-    // Auto-reload sederhana untuk development via XAMPP
-    setInterval(() => {
-        fetch(window.location.href, { method: 'HEAD' })
-            .then(res => {
-                // Bisa dikustomisasi atau biarkan kosong jika pakai Live Server standar
-            }).catch(() => {});
-    }, 2000);
-</script>
+
+    <!-- Auto-reload sederhana untuk development via XAMPP -->
+    <script>
+        setInterval(() => {
+            fetch(window.location.href, { method: 'HEAD' })
+                .then(res => {}).catch(() => {});
+        }, 2000);
+    </script>
 </body>
 </html>

@@ -1,4 +1,3 @@
-
 // ============================================================
 // Beaufoo - app.js
 // ============================================================
@@ -20,8 +19,14 @@ let foobarTime = 0;
 let lastFoobarUpdate = performance.now();
 let staggerTimeoutId = null;
 
+// STATE OFFSET (dalam detik)
+let timeOffset = 0;
+
 const container = document.getElementById("lyrics");
 const romajiBtn = document.getElementById("toggle-romaji");
+const btnMinus = document.getElementById("offset-minus");
+const btnPlus = document.getElementById("offset-plus");
+const offsetIndicator = document.getElementById("offset-indicator");
 
 
 // ============================================================
@@ -183,28 +188,6 @@ function getDisplayWords(lyricsData, line) {
 // ============================================================
 // LONG GAP HANDLER
 // ============================================================
-//
-// Gap > 3 detik:
-//
-// previous lyric
-//       |
-//       | +0.65
-//       v
-//      ...
-//       |
-//       | sampai next.start - 0.65
-//       v
-//   next lyric
-//
-// Synthetic "..." TIDAK menjadi active lyric.
-//
-// Timing:
-//
-// gapStart = previous.end + 0.65
-// gapEnd   = next.start - 0.65
-//
-// Tiga titik akan membagi durasi gap secara merata.
-// ============================================================
 
 function addLongGapLines(lyricsData) {
     if (!lyricsData || !Array.isArray(lyricsData.lines)) {
@@ -243,8 +226,6 @@ function addLongGapLines(lyricsData) {
 
                 text: "...",
 
-                // Penting:
-                // synthetic line sekarang punya word timing
                 words: [
                     {
                         text: ".",
@@ -352,13 +333,12 @@ function renderLyricsDOM(lyricsData) {
 
 
         // --------------------------------------------------------
-        // LONG GAP PLACEHOLDER (DIUBAH AGAR SELALU VISIBLE)
+        // LONG GAP PLACEHOLDER
         // --------------------------------------------------------
 
         if (line.isGapLine) {
             lineEl.classList.add("gap-line");
 
-            // Dot gap selalu ditampilkan, tidak di-hide
             lineEl.style.visibility = "visible";
             lineEl.style.opacity = "1";
         }
@@ -428,8 +408,6 @@ function renderLyricsDOM(lyricsData) {
                 });
 
 
-                // Jangan tambahkan spasi
-                // antar titik pada gap line
                 if (
                     !line.isGapLine &&
                     shouldAddWordSpace(
@@ -473,19 +451,6 @@ function renderLyricsDOM(lyricsData) {
 // ============================================================
 // GAP LINE VISIBILITY
 // ============================================================
-//
-// Placeholder:
-//
-// hidden
-//    |
-//    | previous.end + 0.65
-//    v
-// visible + karaoke
-//    |
-//    | next.start - 0.65
-//    v
-// hidden
-// ============================================================
 
 function updateGapLineVisibility(time) {
     if (
@@ -513,7 +478,6 @@ function updateGapLineVisibility(time) {
                 return;
             }
 
-            // Memastikan baris gap selalu visible sepanjang lagu
             el.style.visibility = "visible";
             el.style.opacity = "1";
         }
@@ -523,15 +487,6 @@ function updateGapLineVisibility(time) {
 
 // ============================================================
 // ACTIVE LINE
-// ============================================================
-//
-// Gap line selalu di-skip.
-//
-// Jadi:
-//
-// previous lyric = active
-// ...            = bukan active
-// next lyric     = active tepat pada start original
 // ============================================================
 
 function getActiveLineIndex(time) {
@@ -554,7 +509,6 @@ function getActiveLineIndex(time) {
             currentLyrics.lines[i];
 
 
-        // Synthetic "..." tidak pernah active
         if (line.isGapLine) {
             continue;
         }
@@ -574,17 +528,6 @@ function getActiveLineIndex(time) {
 
 // ============================================================
 // SCROLL TRIGGER
-// ============================================================
-//
-// GAP < 1.5
-//     -> next.start - 0.65
-//
-// GAP 1.5 - 3
-//     -> previous.end + 0.65
-//
-// GAP > 3
-//     -> "..." pada previous.end + 0.65
-//     -> next lyric pada next.start - 0.65
 // ============================================================
 
 function getScrollLineIndex(time) {
@@ -611,10 +554,6 @@ function getScrollLineIndex(time) {
             line.start - 0.65;
 
 
-        // --------------------------------------------------------
-        // GAP PLACEHOLDER
-        // --------------------------------------------------------
-
         if (line.isGapLine) {
             const prevLine =
                 currentLyrics.lines[i - 1];
@@ -624,11 +563,6 @@ function getScrollLineIndex(time) {
                     prevLine.end + 0.65;
             }
         }
-
-
-        // --------------------------------------------------------
-        // REAL LYRIC
-        // --------------------------------------------------------
 
         else if (i > 0) {
 
@@ -659,8 +593,6 @@ function getScrollLineIndex(time) {
                     previousRealLine.end;
 
 
-                // GAP 1.5 - 3 DETIK
-
                 if (
                     gap >= 1.5 &&
                     gap <= 3
@@ -669,12 +601,6 @@ function getScrollLineIndex(time) {
                         previousRealLine.end +
                         0.65;
                 }
-
-
-                // GAP > 3 DETIK
-                //
-                // Next lyric tetap menggunakan
-                // start - 0.65
 
                 else if (gap > 3) {
                     triggerTime =
@@ -761,10 +687,6 @@ function scrollToActiveLine(scrollLineIndex) {
     }
 
 
-    // ------------------------------------------------------------
-    // LARGE JUMP
-    // ------------------------------------------------------------
-
     if (Math.abs(delta) > 800) {
 
         container.scrollTop =
@@ -791,10 +713,6 @@ function scrollToActiveLine(scrollLineIndex) {
     }
 
 
-    // ------------------------------------------------------------
-    // FASE 1
-    // ------------------------------------------------------------
-
     lineElements.forEach(el => {
         el.style.transition =
             `translate 0s,
@@ -809,19 +727,11 @@ function scrollToActiveLine(scrollLineIndex) {
     });
 
 
-    // ------------------------------------------------------------
-    // FASE 2
-    // ------------------------------------------------------------
-
     container.scrollTop =
         targetScrollTop;
 
     void container.offsetHeight;
 
-
-    // ------------------------------------------------------------
-    // FASE 3
-    // ------------------------------------------------------------
 
     lineElements.forEach(
         (el, index) => {
@@ -895,14 +805,6 @@ function updateLineState(activeLineIndex) {
                 currentLyrics?.lines[index];
 
 
-            // ----------------------------------------------------
-            // GAP LINE
-            // ----------------------------------------------------
-            //
-            // Jangan ikut state active/past/future
-            // karena dia punya styling sendiri.
-            // ----------------------------------------------------
-
             if (line?.isGapLine) {
                 el.classList.add(
                     "future"
@@ -911,10 +813,6 @@ function updateLineState(activeLineIndex) {
                 return;
             }
 
-
-            // ----------------------------------------------------
-            // PAST
-            // ----------------------------------------------------
 
             if (
                 index <
@@ -958,10 +856,6 @@ function updateLineState(activeLineIndex) {
             }
 
 
-            // ----------------------------------------------------
-            // ACTIVE
-            // ----------------------------------------------------
-
             else if (
                 index ===
                 activeLineIndex
@@ -972,10 +866,6 @@ function updateLineState(activeLineIndex) {
                 );
             }
 
-
-            // ----------------------------------------------------
-            // FUTURE
-            // ----------------------------------------------------
 
             else {
 
@@ -1060,10 +950,6 @@ function updateWordProgress(
                 );
 
 
-            // ----------------------------------------------------
-            // WORD PASSED
-            // ----------------------------------------------------
-
             if (time >= wEnd) {
 
                 wordSpan.classList.add(
@@ -1089,10 +975,6 @@ function updateWordProgress(
                 return;
             }
 
-
-            // ----------------------------------------------------
-            // WORD ACTIVE
-            // ----------------------------------------------------
 
             if (
                 time >= wStart &&
@@ -1142,10 +1024,6 @@ function updateWordProgress(
             }
 
 
-            // ----------------------------------------------------
-            // WORD FUTURE
-            // ----------------------------------------------------
-
             wordSpan.classList.remove(
                 "word-active",
                 "word-passed"
@@ -1167,23 +1045,6 @@ function updateWordProgress(
 
 // ============================================================
 // GAP KARAOKE PROGRESS
-// ============================================================
-//
-// Karena "..." bukan active lyric,
-// progress-nya diproses terpisah.
-//
-// Setiap titik mempunyai timing sendiri.
-//
-// .   -> 0% - 33%
-// .   -> 33% - 66%
-// .   -> 66% - 100%
-//
-// Jadi visualnya tetap terlihat seperti
-// karaoke character animation.
-// ============================================================
-
-// ============================================================
-// GAP KARAOKE PROGRESS (FIXED)
 // ============================================================
 
 function updateGapWordProgress(time) {
@@ -1209,14 +1070,12 @@ function updateGapWordProgress(time) {
             const wStart = parseFloat(wordSpan.dataset.start);
             const wEnd = parseFloat(wordSpan.dataset.end);
 
-            // Cek apakah waktu saat ini berada di dalam rentang dot atau sudah lewat
             if (time >= wStart) {
                 wordSpan.classList.add("word-active");
                 wordSpan.classList.remove("word-passed");
 
                 wordSpan.querySelectorAll(".char").forEach(charSpan => {
                     const cStart = parseFloat(charSpan.dataset.start);
-                    // Biarkan animasi berjalan jika sudah melewati waktu mulai char
                     if (time >= cStart) {
                         if (!charSpan.classList.contains("char-active")) {
                             charSpan.classList.add("char-active");
@@ -1224,13 +1083,11 @@ function updateGapWordProgress(time) {
                     }
                 });
 
-                // Jika waktu sudah melewati akhir dot, ubah ke passed tapi pertahankan state visualnya
                 if (time >= wEnd) {
                     wordSpan.classList.add("word-passed");
                     wordSpan.classList.remove("word-active");
                 }
             } else {
-                // Belum waktunya
                 wordSpan.classList.remove("word-active", "word-passed");
                 wordSpan.querySelectorAll(".char").forEach(c => {
                     c.classList.remove("char-active");
@@ -1239,6 +1096,7 @@ function updateGapWordProgress(time) {
         });
     });
 }
+
 
 // ============================================================
 // MASTER UI UPDATE
@@ -1253,18 +1111,10 @@ function updateLyricsUI(time) {
     }
 
 
-    // --------------------------------------------------------
-    // GAP VISIBILITY
-    // --------------------------------------------------------
-
     updateGapLineVisibility(
         time
     );
 
-
-    // --------------------------------------------------------
-    // ACTIVE LINE
-    // --------------------------------------------------------
 
     const activeLineIndex =
         getActiveLineIndex(
@@ -1272,19 +1122,11 @@ function updateLyricsUI(time) {
         );
 
 
-    // --------------------------------------------------------
-    // SCROLL LINE
-    // --------------------------------------------------------
-
     const scrollLineIndex =
         getScrollLineIndex(
             time
         );
 
-
-    // --------------------------------------------------------
-    // 1. HIGHLIGHT / LINE STATE
-    // --------------------------------------------------------
 
     if (
         activeLineIndex !==
@@ -1299,10 +1141,6 @@ function updateLyricsUI(time) {
             activeLineIndex;
     }
 
-
-    // --------------------------------------------------------
-    // 2. SCROLL
-    // --------------------------------------------------------
 
     if (
         scrollLineIndex !==
@@ -1324,19 +1162,11 @@ function updateLyricsUI(time) {
     }
 
 
-    // --------------------------------------------------------
-    // 3. NORMAL KARAOKE
-    // --------------------------------------------------------
-
     updateWordProgress(
         time,
         activeLineIndex
     );
 
-
-    // --------------------------------------------------------
-    // 4. GAP KARAOKE
-    // --------------------------------------------------------
 
     updateGapWordProgress(
         time
@@ -1358,7 +1188,7 @@ function updatePlaybackTime(time) {
 
 
 // ============================================================
-// 60 FPS RENDER LOOP
+// 60 FPS RENDER LOOP (WITH TIME OFFSET)
 // ============================================================
 
 function renderLoop() {
@@ -1378,17 +1208,15 @@ function renderLoop() {
             foobarTime;
 
 
-        // Interpolasi hanya kalau update
-        // foobar masih fresh.
-
         if (delta < 0.5) {
             interpolatedTime +=
                 delta;
         }
 
 
+        // Memasukkan logika timeOffset di sini
         currentTime =
-            interpolatedTime;
+            Math.max(0, interpolatedTime + timeOffset);
 
 
         updateLyricsUI(
@@ -1409,8 +1237,39 @@ requestAnimationFrame(
 
 
 // ============================================================
-// ROMAJI TOGGLE
+// OFFSET INDICATOR UI HELPER
 // ============================================================
+
+function updateOffsetIndicator() {
+    if (!offsetIndicator) return;
+
+    if (timeOffset === 0) {
+        offsetIndicator.classList.add("hidden");
+    } else {
+        const sign = timeOffset > 0 ? "+" : "";
+        offsetIndicator.textContent = `${sign}${timeOffset.toFixed(1)}s`;
+        offsetIndicator.classList.remove("hidden");
+    }
+}
+
+
+// ============================================================
+// CONTROLS EVENT LISTENERS (ROMAJI & OFFSET)
+// ============================================================
+
+if (btnMinus) {
+    btnMinus.addEventListener("click", () => {
+        timeOffset -= 0.5;
+        updateOffsetIndicator();
+    });
+}
+
+if (btnPlus) {
+    btnPlus.addEventListener("click", () => {
+        timeOffset += 0.5;
+        updateOffsetIndicator();
+    });
+}
 
 if (romajiBtn) {
 
@@ -1466,13 +1325,15 @@ if (romajiBtn) {
 
 function loadLyrics(data) {
 
-    // Tambahkan synthetic "..."
-    // untuk gap > 3 detik.
-
     currentLyrics =
         addLongGapLines(
             data
         );
+
+
+    // Reset offset ke 0 setiap lagu baru diputar
+    timeOffset = 0;
+    updateOffsetIndicator();
 
 
     foobarTime = 0;
@@ -1528,8 +1389,6 @@ async function fetchLyrics(metadata) {
             await res.json();
 
 
-        // Format utama
-
         if (
             data &&
             data.type &&
@@ -1540,8 +1399,6 @@ async function fetchLyrics(metadata) {
             return data;
         }
 
-
-        // Format legacy
 
         if (
             data &&
@@ -1577,13 +1434,7 @@ if (
 
     initFoobarBridge(
 
-        // ------------------------------------------------------
-        // TRACK CHANGED
-        // ------------------------------------------------------
-
         async (trackMetadata) => {
-
-            // Reset lyric sementara
 
             currentLyrics =
                 null;
@@ -1592,16 +1443,12 @@ if (
                 "";
 
 
-            // Reset active / scroll tracker
-
             lastActiveLineIndex =
                 -1;
 
             lastScrollLineIndex =
                 -1;
 
-
-            // Fetch lyric baru
 
             const lyrics =
                 await fetchLyrics(
@@ -1618,10 +1465,6 @@ if (
         },
 
 
-        // ------------------------------------------------------
-        // POSITION UPDATE
-        // ------------------------------------------------------
-
         position => {
 
             updatePlaybackTime(
@@ -1630,4 +1473,3 @@ if (
         }
     );
 }
-
