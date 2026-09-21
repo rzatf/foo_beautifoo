@@ -1,3 +1,5 @@
+const stringSimilarity = require("string-similarity");
+
 const { attachRomajiToLyrics } = require("./utils/romaji");
 
 const { getLyrics: getNetEaseLyrics } = require("./providers/netease");
@@ -21,6 +23,54 @@ const { parseLrclib } = require("./parsers/lrclibParser");
 // Import Provider dan Parser Lokal
 // const { getLocalLyrics } = require("./providers/localLyrics");
 // const { parseLocalLrc } = require("./parsers/localParser");
+
+/* =========================================================
+ * FUNGSI HELPER VALIDASI METADATA (JUDUL & ARTIS)
+ * ========================================================= */
+
+function normalizeText(text) {
+    return String(text || "")
+        .toLowerCase()
+        .normalize("NFKC")
+        .replace(/[“”"‘’]/g, "")
+        .replace(/[【】「」『』]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+/**
+ * Validasi ganda: memastikan Judul DAN Artis keduanya cocok.
+ */
+function isMetadataMatch(itemMetadata, targetMetadata) {
+    if (!itemMetadata) return true; // Jika provider tidak mengembalikan objek metadata lagu, teruskan ke verifikasi berikutnya
+
+    const targetTitle = normalizeText(targetMetadata?.title);
+    const targetArtist = normalizeText(targetMetadata?.artist);
+
+    const itemTitle = normalizeText(itemMetadata?.title);
+    const itemArtist = Array.isArray(itemMetadata?.artist)
+        ? itemMetadata.artist.map(normalizeText).join(" ")
+        : normalizeText(itemMetadata?.artist);
+
+    if (!targetTitle || !targetArtist) return true;
+
+    // 1. Validasi Judul (Similarity score >= 0.5 ATAU substring match)
+    const titleSim = stringSimilarity.compareTwoStrings(itemTitle, targetTitle);
+    const isTitleValid =
+        titleSim >= 0.5 ||
+        itemTitle.includes(targetTitle) ||
+        targetTitle.includes(itemTitle);
+
+    // 2. Validasi Artis (Similarity score >= 0.4 ATAU substring match)
+    const artistSim = stringSimilarity.compareTwoStrings(itemArtist, targetArtist);
+    const isArtistValid =
+        artistSim >= 0.4 ||
+        itemArtist.includes(targetArtist) ||
+        targetArtist.includes(itemArtist);
+
+    // Keduanya WAJIB BERNILAI TRUE
+    return isTitleValid && isArtistValid;
+}
 
 async function getLyrics(metadata) {
 
@@ -109,6 +159,19 @@ async function getLyrics(metadata) {
 
         const { provider, parsed } = result;
 
+        // Ambil info metadata lagu dari parser
+        const songMetadata = parsed.song || parsed.karaoke?.song || parsed.line?.song;
+
+        // =========================================================
+        // VALIDASI 1: FILTER KANDIDAT PERTAMA (CEK METADATA PROVIDER)
+        // =========================================================
+        if (!isMetadataMatch(songMetadata, metadata)) {
+            console.warn(
+                `[Engine] [Validasi 1 Ditolak] ${provider}: Judul atau Artis tidak sesuai request.`
+            );
+            continue;
+        }
+
         if (parsed.karaoke) {
             karaokeCandidates.push({ provider, lyrics: parsed.karaoke });
             console.log(`[Engine] ${provider}: kandidat KARAOKE ditemukan`);
@@ -182,6 +245,21 @@ async function getLyrics(metadata) {
         console.log("[Engine] Tidak ada lirik ditemukan.");
         return null;
     }
+
+    // =========================================================
+    // VALIDASI 2: CEK VERIFIKASI AKHIR SEBELUM DITERUSKAN
+    // =========================================================
+
+    const finalSongMetadata = selected.lyrics.song;
+
+    if (!isMetadataMatch(finalSongMetadata, metadata)) {
+        console.error(
+            `[Engine] [Validasi 2 Ditolak] Lirik terpilih dari ${selected.provider} gagal verifikasi akhir!`
+        );
+        return null;
+    }
+
+    console.log(`[Engine] [Validasi 2 Lolos] Metadata kandidat terpilih terverifikasi cocok.`);
 
     // =========================================================
     // ROMAJI & PENYESUAIAN APP.JS
