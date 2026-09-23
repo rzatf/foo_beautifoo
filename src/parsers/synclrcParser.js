@@ -51,16 +51,23 @@ function parseSyncLRC(rawData) {
                 words.push({
                     text: cleanedWord,
                     start: parseFloat(wStartSec.toFixed(2)),
-                    end: parseFloat((wStartSec + 0.3).toFixed(2))
+                    end: parseFloat((wStartSec + 0.5).toFixed(2)) // Default estimasi awal
                 });
             }
         }
 
         if (words.length > 0) {
             isKaraoke = true;
+            
+            // Sambung end time kata i dengan start time kata i + 1
             for (let i = 0; i < words.length - 1; i++) {
                 words[i].end = words[i + 1].start;
             }
+
+            // PERBAIKAN: Estimasi kata terakhir agar durasinya proporsional dengan panjang teks
+            const lastWordIndex = words.length - 1;
+            const lastWordLength = words[lastWordIndex].text.trim().length || 1;
+            words[lastWordIndex].end = parseFloat((words[lastWordIndex].start + Math.max(0.6, lastWordLength * 0.25)).toFixed(2));
 
             const fullLineText = words.map(w => w.text).join("");
 
@@ -86,6 +93,7 @@ function parseSyncLRC(rawData) {
 
     if (lines.length === 0) return null;
 
+    // Untuk Lirik Tipe Plain/Line: Atur end time baris dengan start time baris berikutnya
     if (!isKaraoke) {
         for (let i = 0; i < lines.length - 1; i++) {
             lines[i].end = lines[i + 1].start;
@@ -97,6 +105,7 @@ function parseSyncLRC(rawData) {
     return {
         type: isKaraoke ? "karaoke" : "line",
         source: "synclrc",
+        song: rawData.song || null,
         lines: lines
     };
 }
