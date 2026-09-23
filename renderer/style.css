@@ -67,7 +67,7 @@ body {
 
 
 /* ============================================================
-   BASE LYRIC LINE
+   BASE LYRIC LINE (OPTIMIZED WITH HARDWARE ACCELERATION)
    ============================================================ */
 
 .lyric-line {
@@ -83,12 +83,15 @@ body {
 
     filter: blur(1.5px);
 
-    translate:
-        0 var(--y-offset, 0px);
+    translate: 0 var(--y-offset, 0px);
 
     transform: scale(0.95);
 
     transform-origin: left center;
+
+    /* OPTIMASI GPU AGAR TIDAK FORCED REFLOW */
+    will-change: transform, opacity, filter, translate;
+    contain: layout style;
 
     transition:
         opacity 300ms ease,
@@ -161,8 +164,7 @@ body {
 
     padding: 4px 0;
 
-    transition:
-        transform 150ms ease;
+    transition: transform 150ms ease;
 
     will-change: transform;
 }
@@ -175,8 +177,7 @@ body {
     transform: scale(1);
 }
 
-.lyric-line.active
-.word:not(.word-active):not(.word-passed) {
+.lyric-line.active .word:not(.word-active):not(.word-passed) {
     transform: scale(1);
 }
 
@@ -196,10 +197,7 @@ body {
 
     transform-origin: center bottom;
 
-    will-change:
-        transform,
-        color,
-        text-shadow;
+    will-change: transform, color, text-shadow;
 }
 
 .char.char-active {
@@ -209,8 +207,7 @@ body {
         0 0 19px rgba(255, 255, 255, 0.5),
         0 0 36px rgba(255, 255, 255, 0.2);
 
-    animation:
-        charBounceSpring 1400ms ease-out forwards;
+    animation: charBounceSpring 1400ms ease-out forwards;
 }
 
 
@@ -219,41 +216,23 @@ body {
    ============================================================ */
 
 @keyframes charBounceSpring {
-
     0% {
-        transform:
-            scale(1)
-            translateY(0px);
+        transform: scale(1) translateY(0px);
     }
-
     30% {
-        transform:
-            scale(1.12)
-            translateY(-0.5px);
+        transform: scale(1.12) translateY(-0.5px);
     }
-
     55% {
-        transform:
-            scale(0.97)
-            translateY(0.05px);
+        transform: scale(0.97) translateY(0.05px);
     }
-
     75% {
-        transform:
-            scale(1.015)
-            translateY(-0.05px);
+        transform: scale(1.015) translateY(-0.05px);
     }
-
     90% {
-        transform:
-            scale(0.995)
-            translateY(0.005px);
+        transform: scale(0.995) translateY(0.005px);
     }
-
     100% {
-        transform:
-            scale(1)
-            translateY(0px);
+        transform: scale(1) translateY(0px);
     }
 }
 
@@ -330,8 +309,7 @@ body {
    GAP DOT - BELUM AKTIF
    ============================================================ */
 
-#lyrics .lyric-line.gap-line
-.char:not(.char-active) {
+#lyrics .lyric-line.gap-line .char:not(.char-active) {
     opacity: 0.25;
     background: rgba(255, 255, 255, 0.22);
     box-shadow: none;
@@ -343,8 +321,7 @@ body {
    GAP DOT - AKTIF
    ============================================================ */
 
-#lyrics .lyric-line.gap-line
-.char.char-active {
+#lyrics .lyric-line.gap-line .char.char-active {
     opacity: 1;
     background: rgba(255, 255, 255, 1);
     box-shadow:
@@ -358,9 +335,7 @@ body {
    GAP DOT - SUDAH LEWAT
    ============================================================ */
 
-#lyrics .lyric-line.gap-line
-.word.word-passed
-.char {
+#lyrics .lyric-line.gap-line .word.word-passed .char {
     opacity: 0.72;
     background: rgba(255, 255, 255, 0.72);
     box-shadow: 0 0 6px rgba(255, 255, 255, 0.22);
@@ -423,7 +398,6 @@ body {
 #lyrics .gap-line.active,
 #lyrics .gap-line .word,
 #lyrics .gap-line .char {
-
     filter: none !important;
 }
 
@@ -433,13 +407,9 @@ body {
    ============================================================ */
 
 .lyric-line.duet {
-
     align-self: flex-end;
-
     text-align: right;
-
     transform-origin: right center;
-
     font-style: italic;
 }
 
@@ -501,7 +471,7 @@ body {
     transform: scale(0.95);
 }
 
-/* Badge Indikator Offset: Sembunyi permanen jika tidak di-hover */
+/* Badge Indikator Offset */
 .offset-badge {
     position: absolute;
     top: -24px;
@@ -515,21 +485,18 @@ body {
     pointer-events: none;
     white-space: nowrap;
     
-    /* Pengaturan Sembunyi Default */
     opacity: 0;
     visibility: hidden;
     transform: translateY(4px);
     transition: opacity 200ms ease, transform 200ms ease, visibility 200ms ease;
 }
 
-/* Hanya tampil saat area tombol bawah di-hover DAN kelas .hidden tidak aktif */
 #controls-container:hover .offset-badge:not(.hidden) {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
 }
 
-/* Jika offset 0s (punya class .hidden), jangan pernah tampilkan walau di-hover */
 .offset-badge.hidden {
     display: none !important;
 }
@@ -593,17 +560,13 @@ body {
    ============================================================ */
 
 @media (max-width: 700px) {
-
     #lyrics .lyric-line.gap-line .char {
-
         width: 11px;
         height: 11px;
-
         flex-basis: 11px;
     }
 
     #lyrics .lyric-line.gap-line .word {
-
         gap: 8px;
     }
 }

@@ -1,5 +1,5 @@
 // ============================================================
-// Beaufoo - app.js
+// Beaufoo - app.js (Optimized)
 // ============================================================
 
 // ============================================================
@@ -52,22 +52,18 @@ function shouldAddWordSpace(previousText, currentText) {
 
     const current = currentText.trimStart();
 
-    // Jangan kasih spasi untuk CJK / Japanese / Korean
     if (isAsianScript(previousText) || isAsianScript(currentText)) {
         return false;
     }
 
-    // Punctuation
     if (/^[,.;:!?%)\]}]/.test(current)) {
         return false;
     }
 
-    // Apostrophe
     if (current.startsWith("'") || current.startsWith("’")) {
         return false;
     }
 
-    // Kalau word sebelumnya sudah punya spasi
     if (/\s$/.test(previousText)) {
         return false;
     }
@@ -97,7 +93,6 @@ function getOriginalWords(line) {
     );
 }
 
-
 function getRomajiWordsWithTiming(line) {
     if (!line || !line.romajiText) {
         return [];
@@ -113,7 +108,6 @@ function getRomajiWordsWithTiming(line) {
 
     const origWords = getOriginalWords(line);
 
-    // Tidak ada timing original
     if (origWords.length === 0) {
         return romajiTokens.map(token => ({
             text: token,
@@ -122,7 +116,6 @@ function getRomajiWordsWithTiming(line) {
         }));
     }
 
-    // Jumlah token romaji sama dengan jumlah word original
     if (romajiTokens.length === origWords.length) {
         return romajiTokens.map((token, idx) => ({
             text: token,
@@ -131,10 +124,7 @@ function getRomajiWordsWithTiming(line) {
         }));
     }
 
-    // Fallback:
-    // Distribusikan timing berdasarkan panjang token romaji
     const totalDuration = line.end - line.start;
-
     const totalChars = romajiTokens.reduce(
         (acc, token) => acc + token.length,
         0
@@ -149,7 +139,6 @@ function getRomajiWordsWithTiming(line) {
                 : 1 / romajiTokens.length;
 
         const duration = totalDuration * weight;
-
         const wordStart = currentStart;
         const wordEnd = wordStart + duration;
 
@@ -163,11 +152,9 @@ function getRomajiWordsWithTiming(line) {
     });
 }
 
-
 function getDisplayWords(lyricsData, line) {
     const originalWords = getOriginalWords(line);
 
-    // Bukan mode romaji
     if (!isRomajiMode || !line.romajiText) {
         return originalWords;
     }
@@ -176,7 +163,6 @@ function getDisplayWords(lyricsData, line) {
         .map(word => word.text)
         .join("");
 
-    // Latin tidak perlu diganti ke romaji
     if (isLatinLikeText(originalText)) {
         return originalWords;
     }
@@ -201,53 +187,38 @@ function addLongGapLines(lyricsData) {
 
         newLines.push(line);
 
-        // Tidak ada next line
         if (i >= lyricsData.lines.length - 1) {
             continue;
         }
 
         const nextLine = lyricsData.lines[i + 1];
+        const gap = nextLine.start - line.end;
 
-        const gap =
-            nextLine.start -
-            line.end;
-
-        // Hanya gap > 3 detik
         if (gap > 3) {
-            const gapStart =
-                line.end + 0.65;
-
-            const gapEnd =
-                nextLine.start - 0.65;
+            const gapStart = line.end + 0.65;
+            const gapEnd = nextLine.start - 0.65;
 
             newLines.push({
                 start: gapStart,
                 end: gapEnd,
-
                 text: "...",
-
                 words: [
                     {
                         text: ".",
                         start: gapStart,
-                        end: gapStart +
-                            ((gapEnd - gapStart) / 3)
+                        end: gapStart + ((gapEnd - gapStart) / 3)
                     },
                     {
                         text: ".",
-                        start: gapStart +
-                            ((gapEnd - gapStart) / 3),
-                        end: gapStart +
-                            ((gapEnd - gapStart) * 2 / 3)
+                        start: gapStart + ((gapEnd - gapStart) / 3),
+                        end: gapStart + ((gapEnd - gapStart) * 2 / 3)
                     },
                     {
                         text: ".",
-                        start: gapStart +
-                            ((gapEnd - gapStart) * 2 / 3),
+                        start: gapStart + ((gapEnd - gapStart) * 2 / 3),
                         end: gapEnd
                     }
                 ],
-
                 isGapLine: true
             });
         }
@@ -265,19 +236,9 @@ function addLongGapLines(lyricsData) {
 // ============================================================
 
 if (container) {
-    container.addEventListener(
-        "wheel",
-        markUserScrolling,
-        { passive: true }
-    );
-
-    container.addEventListener(
-        "touchmove",
-        markUserScrolling,
-        { passive: true }
-    );
+    container.addEventListener("wheel", markUserScrolling, { passive: true });
+    container.addEventListener("touchmove", markUserScrolling, { passive: true });
 }
-
 
 function markUserScrolling() {
     isUserScrolling = true;
@@ -290,7 +251,6 @@ function markUserScrolling() {
         isUserScrolling = false;
     }, 3000);
 }
-
 
 if (container) {
     container.addEventListener("scroll", () => {
@@ -321,127 +281,60 @@ function renderLyricsDOM(lyricsData) {
             ? "mode-karaoke"
             : "mode-plain";
 
-
     lyricsData.lines.forEach((line, lineIndex) => {
-        const lineEl =
-            document.createElement("div");
-
-        lineEl.className =
-            `lyric-line future ${line.isDuet ? "duet" : ""}`;
-
+        const lineEl = document.createElement("div");
+        lineEl.className = `lyric-line future ${line.isDuet ? "duet" : ""}`;
         lineEl.dataset.index = lineIndex;
-
-
-        // --------------------------------------------------------
-        // LONG GAP PLACEHOLDER
-        // --------------------------------------------------------
 
         if (line.isGapLine) {
             lineEl.classList.add("gap-line");
-
             lineEl.style.visibility = "visible";
             lineEl.style.opacity = "1";
         }
-
-
-        // --------------------------------------------------------
-        // KARAOKE
-        // --------------------------------------------------------
 
         if (
             lyricsData.type === "karaoke" &&
             Array.isArray(line.words) &&
             line.words.length > 0
         ) {
-            const displayWords =
-                getDisplayWords(
-                    lyricsData,
-                    line
-                );
-
+            const displayWords = getDisplayWords(lyricsData, line);
             let previousText = "";
 
-
             displayWords.forEach(word => {
-                const wordSpan =
-                    document.createElement("span");
-
+                const wordSpan = document.createElement("span");
                 wordSpan.className = "word";
+                wordSpan.dataset.start = word.start;
+                wordSpan.dataset.end = word.end;
 
-                wordSpan.dataset.start =
-                    word.start;
-
-                wordSpan.dataset.end =
-                    word.end;
-
-
-                const chars =
-                    Array.from(word.text);
-
+                const chars = Array.from(word.text);
                 const charDuration =
                     chars.length > 0
-                        ? (word.end - word.start) /
-                          chars.length
+                        ? (word.end - word.start) / chars.length
                         : 0;
 
-
                 chars.forEach((char, i) => {
-                    const charSpan =
-                        document.createElement("span");
-
+                    const charSpan = document.createElement("span");
                     charSpan.className = "char";
+                    charSpan.textContent = char;
+                    charSpan.dataset.start = word.start + (i * charDuration);
+                    charSpan.dataset.end = word.start + ((i + 1) * charDuration);
 
-                    charSpan.textContent =
-                        char;
-
-                    charSpan.dataset.start =
-                        word.start +
-                        (i * charDuration);
-
-                    charSpan.dataset.end =
-                        word.start +
-                        ((i + 1) * charDuration);
-
-                    wordSpan.appendChild(
-                        charSpan
-                    );
+                    wordSpan.appendChild(charSpan);
                 });
 
-
-                if (
-                    !line.isGapLine &&
-                    shouldAddWordSpace(
-                        previousText,
-                        word.text
-                    )
-                ) {
-                    lineEl.appendChild(
-                        document.createTextNode(" ")
-                    );
+                if (!line.isGapLine && shouldAddWordSpace(previousText, word.text)) {
+                    lineEl.appendChild(document.createTextNode(" "));
                 }
 
-
-                lineEl.appendChild(
-                    wordSpan
-                );
-
-                previousText =
-                    word.text;
+                lineEl.appendChild(wordSpan);
+                previousText = word.text;
             });
-        }
-
-
-        // --------------------------------------------------------
-        // PLAIN
-        // --------------------------------------------------------
-
-        else {
+        } else {
             lineEl.textContent =
                 (isRomajiMode && line.romajiText)
                     ? line.romajiText
                     : line.text;
         }
-
 
         container.appendChild(lineEl);
     });
@@ -453,35 +346,18 @@ function renderLyricsDOM(lyricsData) {
 // ============================================================
 
 function updateGapLineVisibility(time) {
-    if (
-        !currentLyrics ||
-        !currentLyrics.lines
-    ) {
-        return;
-    }
+    if (!currentLyrics || !currentLyrics.lines) return;
 
-    const lineElements =
-        container.querySelectorAll(
-            ".lyric-line"
-        );
+    const lineElements = container.querySelectorAll(".lyric-line");
 
-    currentLyrics.lines.forEach(
-        (line, index) => {
-            if (!line.isGapLine) {
-                return;
-            }
+    currentLyrics.lines.forEach((line, index) => {
+        if (!line.isGapLine) return;
+        const el = lineElements[index];
+        if (!el) return;
 
-            const el =
-                lineElements[index];
-
-            if (!el) {
-                return;
-            }
-
-            el.style.visibility = "visible";
-            el.style.opacity = "1";
-        }
-    );
+        el.style.visibility = "visible";
+        el.style.opacity = "1";
+    });
 }
 
 
@@ -490,29 +366,13 @@ function updateGapLineVisibility(time) {
 // ============================================================
 
 function getActiveLineIndex(time) {
-    if (
-        !currentLyrics ||
-        !currentLyrics.lines
-    ) {
-        return -1;
-    }
+    if (!currentLyrics || !currentLyrics.lines) return -1;
 
     let activeLineIndex = -1;
 
-
-    for (
-        let i = 0;
-        i < currentLyrics.lines.length;
-        i++
-    ) {
-        const line =
-            currentLyrics.lines[i];
-
-
-        if (line.isGapLine) {
-            continue;
-        }
-
+    for (let i = 0; i < currentLyrics.lines.length; i++) {
+        const line = currentLyrics.lines[i];
+        if (line.isGapLine) continue;
 
         if (time >= line.start) {
             activeLineIndex = i;
@@ -520,7 +380,6 @@ function getActiveLineIndex(time) {
             break;
         }
     }
-
 
     return activeLineIndex;
 }
@@ -531,92 +390,39 @@ function getActiveLineIndex(time) {
 // ============================================================
 
 function getScrollLineIndex(time) {
-    if (
-        !currentLyrics ||
-        !currentLyrics.lines
-    ) {
-        return -1;
-    }
+    if (!currentLyrics || !currentLyrics.lines) return -1;
 
     let scrollIndex = -1;
 
-
-    for (
-        let i = 0;
-        i < currentLyrics.lines.length;
-        i++
-    ) {
-        const line =
-            currentLyrics.lines[i];
-
-
-        let triggerTime =
-            line.start - 0.65;
-
+    for (let i = 0; i < currentLyrics.lines.length; i++) {
+        const line = currentLyrics.lines[i];
+        let triggerTime = line.start - 0.65;
 
         if (line.isGapLine) {
-            const prevLine =
-                currentLyrics.lines[i - 1];
-
+            const prevLine = currentLyrics.lines[i - 1];
             if (prevLine) {
-                triggerTime =
-                    prevLine.end + 0.65;
+                triggerTime = prevLine.end + 0.65;
             }
-        }
-
-        else if (i > 0) {
-
+        } else if (i > 0) {
             let previousRealLine = null;
-
-
-            for (
-                let j = i - 1;
-                j >= 0;
-                j--
-            ) {
-                if (
-                    !currentLyrics.lines[j]
-                        .isGapLine
-                ) {
-                    previousRealLine =
-                        currentLyrics.lines[j];
-
+            for (let j = i - 1; j >= 0; j--) {
+                if (!currentLyrics.lines[j].isGapLine) {
+                    previousRealLine = currentLyrics.lines[j];
                     break;
                 }
             }
 
-
             if (previousRealLine) {
-
-                const gap =
-                    line.start -
-                    previousRealLine.end;
-
-
-                if (
-                    gap >= 1.5 &&
-                    gap <= 3
-                ) {
-                    triggerTime =
-                        previousRealLine.end +
-                        0.65;
-                }
-
-                else if (gap > 3) {
-                    triggerTime =
-                        line.start -
-                        0.65;
+                const gap = line.start - previousRealLine.end;
+                if (gap >= 1.5 && gap <= 3) {
+                    triggerTime = previousRealLine.end + 0.65;
+                } else if (gap > 3) {
+                    triggerTime = line.start - 0.65;
                 }
             }
         }
 
-
-        triggerTime =
-            Math.max(
-                0,
-                triggerTime
-            );
-
+        triggerTime = Math.max(0, triggerTime);
 
         if (time >= triggerTime) {
             scrollIndex = i;
@@ -625,93 +431,52 @@ function getScrollLineIndex(time) {
         }
     }
 
-
     return scrollIndex;
 }
 
 
 // ============================================================
-// SCROLL ANIMATION
+// SCROLL ANIMATION (FORCED REFLOW FIXED)
 // ============================================================
 
 function scrollToActiveLine(scrollLineIndex) {
-    if (isUserScrolling) {
-        return;
-    }
+    if (isUserScrolling) return;
 
-
-    const lineElements =
-        container.querySelectorAll(
-            ".lyric-line"
-        );
-
-
-    const activeEl =
-        lineElements[scrollLineIndex];
-
-
-    if (!activeEl) {
-        return;
-    }
-
+    const lineElements = container.querySelectorAll(".lyric-line");
+    const activeEl = lineElements[scrollLineIndex];
+    if (!activeEl) return;
 
     const targetScrollTop =
         activeEl.offsetTop -
         (container.clientHeight / 2) +
         (activeEl.clientHeight / 2);
 
+    const startScrollTop = container.scrollTop;
+    const delta = startScrollTop - targetScrollTop;
 
-    const startScrollTop =
-        container.scrollTop;
-
-
-    const delta =
-        startScrollTop -
-        targetScrollTop;
-
-
-    if (Math.abs(delta) < 2) {
-        return;
-    }
-
+    if (Math.abs(delta) < 2) return;
 
     isProgrammaticScroll = true;
 
-
     if (staggerTimeoutId) {
-        clearTimeout(
-            staggerTimeoutId
-        );
-
+        clearTimeout(staggerTimeoutId);
         staggerTimeoutId = null;
     }
 
-
     if (Math.abs(delta) > 800) {
-
-        container.scrollTop =
-            targetScrollTop;
-
+        container.scrollTop = targetScrollTop;
 
         lineElements.forEach(el => {
             el.style.transition = "";
-
-            el.style.setProperty(
-                "--y-offset",
-                "0px"
-            );
+            el.style.setProperty("--y-offset", "0px");
         });
 
-
         setTimeout(() => {
-            isProgrammaticScroll =
-                false;
+            isProgrammaticScroll = false;
         }, 50);
-
 
         return;
     }
-
 
     lineElements.forEach(el => {
         el.style.transition =
@@ -720,33 +485,16 @@ function scrollToActiveLine(scrollLineIndex) {
              filter 300ms ease,
              transform 300ms ease`;
 
-        el.style.setProperty(
-            "--y-offset",
-            `${-delta}px`
-        );
+        el.style.setProperty("--y-offset", `${-delta}px`);
     });
 
+    container.scrollTop = targetScrollTop;
 
-    container.scrollTop =
-        targetScrollTop;
-
-    void container.offsetHeight;
-
-
-    lineElements.forEach(
-        (el, index) => {
-
-            const relativeIndex =
-                index -
-                (scrollLineIndex - 5);
-
-
-            const delay =
-                Math.max(
-                    0,
-                    relativeIndex
-                ) * 0.035;
-
+    // KITA REMOVE VOID CONTAINER.OFFSETHIGHT AGAR BERJALAN MULUS DAN TIDAK PACK FORCED REFLOW
+    requestAnimationFrame(() => {
+        lineElements.forEach((el, index) => {
+            const relativeIndex = index - (scrollLineIndex - 5);
+            const delay = Math.max(0, relativeIndex) * 0.035;
 
             el.style.transition =
                 `translate 700ms cubic-bezier(0.42, 0, 0.58, 1) ${delay}s,
@@ -754,29 +502,16 @@ function scrollToActiveLine(scrollLineIndex) {
                  filter 300ms ease,
                  transform 300ms ease`;
 
+            el.style.setProperty("--y-offset", "0px");
+        });
+    });
 
-            el.style.setProperty(
-                "--y-offset",
-                "0px"
-            );
-        }
-    );
-
-
-    staggerTimeoutId =
-        setTimeout(() => {
-
-            lineElements.forEach(
-                el => {
-                    el.style.transition =
-                        "";
-                }
-            );
-
-            isProgrammaticScroll =
-                false;
-
-        }, 1500);
+    staggerTimeoutId = setTimeout(() => {
+        lineElements.forEach(el => {
+            el.style.transition = "";
+        });
+        isProgrammaticScroll = false;
+    }, 1500);
 }
 
 
@@ -785,124 +520,47 @@ function scrollToActiveLine(scrollLineIndex) {
 // ============================================================
 
 function updateLineState(activeLineIndex) {
-    const lineElements =
-        container.querySelectorAll(
-            ".lyric-line"
-        );
+    const lineElements = container.querySelectorAll(".lyric-line");
 
+    lineElements.forEach((el, index) => {
+        el.classList.remove("past", "active", "future");
 
-    lineElements.forEach(
-        (el, index) => {
+        const line = currentLyrics?.lines[index];
 
-            el.classList.remove(
-                "past",
-                "active",
-                "future"
-            );
+        if (line?.isGapLine) {
+            el.classList.add("future");
+            return;
+        }
 
+        if (index < activeLineIndex) {
+            el.classList.add("past");
 
-            const line =
-                currentLyrics?.lines[index];
+            if (currentLyrics?.type === "karaoke") {
+                el.querySelectorAll(".word").forEach(w => {
+                    w.classList.add("word-passed");
+                    w.classList.remove("word-active");
 
-
-            if (line?.isGapLine) {
-                el.classList.add(
-                    "future"
-                );
-
-                return;
-            }
-
-
-            if (
-                index <
-                activeLineIndex
-            ) {
-
-                el.classList.add(
-                    "past"
-                );
-
-
-                if (
-                    currentLyrics?.type ===
-                    "karaoke"
-                ) {
-
-                    el.querySelectorAll(
-                        ".word"
-                    ).forEach(w => {
-
-                        w.classList.add(
-                            "word-passed"
-                        );
-
-                        w.classList.remove(
-                            "word-active"
-                        );
-
-
-                        w.querySelectorAll(
-                            ".char"
-                        ).forEach(c => {
-
-                            c.classList.add(
-                                "char-active"
-                            );
-
-                        });
+                    w.querySelectorAll(".char").forEach(c => {
+                        c.classList.add("char-active");
                     });
-                }
+                });
             }
+        } else if (index === activeLineIndex) {
+            el.classList.add("active");
+        } else {
+            el.classList.add("future");
 
+            if (currentLyrics?.type === "karaoke") {
+                el.querySelectorAll(".word").forEach(w => {
+                    w.classList.remove("word-active", "word-passed");
 
-            else if (
-                index ===
-                activeLineIndex
-            ) {
-
-                el.classList.add(
-                    "active"
-                );
-            }
-
-
-            else {
-
-                el.classList.add(
-                    "future"
-                );
-
-
-                if (
-                    currentLyrics?.type ===
-                    "karaoke"
-                ) {
-
-                    el.querySelectorAll(
-                        ".word"
-                    ).forEach(w => {
-
-                        w.classList.remove(
-                            "word-active",
-                            "word-passed"
-                        );
-
-
-                        w.querySelectorAll(
-                            ".char"
-                        ).forEach(c => {
-
-                            c.classList.remove(
-                                "char-active"
-                            );
-
-                        });
+                    w.querySelectorAll(".char").forEach(c => {
+                        c.classList.remove("char-active");
                     });
-                }
+                });
             }
         }
-    );
+    });
 }
 
 
@@ -910,10 +568,7 @@ function updateLineState(activeLineIndex) {
 // WORD / CHARACTER PROGRESS
 // ============================================================
 
-function updateWordProgress(
-    time,
-    activeLineIndex
-) {
+function updateWordProgress(time, activeLineIndex) {
     if (
         !currentLyrics ||
         currentLyrics.type !== "karaoke" ||
@@ -922,124 +577,45 @@ function updateWordProgress(
         return;
     }
 
+    const activeLineEl = container.querySelectorAll(".lyric-line")[activeLineIndex];
+    if (!activeLineEl) return;
 
-    const activeLineEl =
-        container.querySelectorAll(
-            ".lyric-line"
-        )[activeLineIndex];
+    activeLineEl.querySelectorAll(".word").forEach(wordSpan => {
+        const wStart = parseFloat(wordSpan.dataset.start);
+        const wEnd = parseFloat(wordSpan.dataset.end);
 
+        if (time >= wEnd) {
+            wordSpan.classList.add("word-passed");
+            wordSpan.classList.remove("word-active");
 
-    if (!activeLineEl) {
-        return;
-    }
+            wordSpan.querySelectorAll(".char").forEach(c => {
+                c.classList.add("char-active");
+            });
 
+            return;
+        }
 
-    activeLineEl
-        .querySelectorAll(".word")
-        .forEach(wordSpan => {
+        if (time >= wStart && time < wEnd) {
+            wordSpan.classList.add("word-active");
+            wordSpan.classList.remove("word-passed");
 
-            const wStart =
-                parseFloat(
-                    wordSpan.dataset.start
-                );
+            wordSpan.querySelectorAll(".char").forEach(charSpan => {
+                const cStart = parseFloat(charSpan.dataset.start);
+                if (time >= cStart) {
+                    charSpan.classList.add("char-active");
+                } else {
+                    charSpan.classList.remove("char-active");
+                }
+            });
 
+            return;
+        }
 
-            const wEnd =
-                parseFloat(
-                    wordSpan.dataset.end
-                );
-
-
-            if (time >= wEnd) {
-
-                wordSpan.classList.add(
-                    "word-passed"
-                );
-
-                wordSpan.classList.remove(
-                    "word-active"
-                );
-
-
-                wordSpan
-                    .querySelectorAll(".char")
-                    .forEach(c => {
-
-                        c.classList.add(
-                            "char-active"
-                        );
-
-                    });
-
-
-                return;
-            }
-
-
-            if (
-                time >= wStart &&
-                time < wEnd
-            ) {
-
-                wordSpan.classList.add(
-                    "word-active"
-                );
-
-                wordSpan.classList.remove(
-                    "word-passed"
-                );
-
-
-                wordSpan
-                    .querySelectorAll(".char")
-                    .forEach(
-                        charSpan => {
-
-                            const cStart =
-                                parseFloat(
-                                    charSpan.dataset.start
-                                );
-
-
-                            if (
-                                time >=
-                                cStart
-                            ) {
-
-                                charSpan.classList.add(
-                                    "char-active"
-                                );
-
-                            } else {
-
-                                charSpan.classList.remove(
-                                    "char-active"
-                                );
-                            }
-                        }
-                    );
-
-
-                return;
-            }
-
-
-            wordSpan.classList.remove(
-                "word-active",
-                "word-passed"
-            );
-
-
-            wordSpan
-                .querySelectorAll(".char")
-                .forEach(c => {
-
-                    c.classList.remove(
-                        "char-active"
-                    );
-
-                });
+        wordSpan.classList.remove("word-active", "word-passed");
+        wordSpan.querySelectorAll(".char").forEach(c => {
+            c.classList.remove("char-active");
         });
+    });
 }
 
 
@@ -1048,21 +624,14 @@ function updateWordProgress(
 // ============================================================
 
 function updateGapWordProgress(time) {
-    if (!currentLyrics || !currentLyrics.lines) {
-        return;
-    }
+    if (!currentLyrics || !currentLyrics.lines) return;
 
     const lineElements = container.querySelectorAll(".lyric-line");
 
     currentLyrics.lines.forEach((line, index) => {
-        if (!line.isGapLine) {
-            return;
-        }
-
+        if (!line.isGapLine) return;
         const lineEl = lineElements[index];
-        if (!lineEl) {
-            return;
-        }
+        if (!lineEl) return;
 
         const words = lineEl.querySelectorAll(".word");
 
@@ -1103,74 +672,27 @@ function updateGapWordProgress(time) {
 // ============================================================
 
 function updateLyricsUI(time) {
-    if (
-        !currentLyrics ||
-        !currentLyrics.lines
-    ) {
-        return;
+    if (!currentLyrics || !currentLyrics.lines) return;
+
+    updateGapLineVisibility(time);
+
+    const activeLineIndex = getActiveLineIndex(time);
+    const scrollLineIndex = getScrollLineIndex(time);
+
+    if (activeLineIndex !== lastActiveLineIndex) {
+        updateLineState(activeLineIndex);
+        lastActiveLineIndex = activeLineIndex;
     }
 
-
-    updateGapLineVisibility(
-        time
-    );
-
-
-    const activeLineIndex =
-        getActiveLineIndex(
-            time
-        );
-
-
-    const scrollLineIndex =
-        getScrollLineIndex(
-            time
-        );
-
-
-    if (
-        activeLineIndex !==
-        lastActiveLineIndex
-    ) {
-
-        updateLineState(
-            activeLineIndex
-        );
-
-        lastActiveLineIndex =
-            activeLineIndex;
-    }
-
-
-    if (
-        scrollLineIndex !==
-        lastScrollLineIndex
-    ) {
-
-        if (
-            scrollLineIndex !== -1
-        ) {
-
-            scrollToActiveLine(
-                scrollLineIndex
-            );
+    if (scrollLineIndex !== lastScrollLineIndex) {
+        if (scrollLineIndex !== -1) {
+            scrollToActiveLine(scrollLineIndex);
         }
-
-
-        lastScrollLineIndex =
-            scrollLineIndex;
+        lastScrollLineIndex = scrollLineIndex;
     }
 
-
-    updateWordProgress(
-        time,
-        activeLineIndex
-    );
-
-
-    updateGapWordProgress(
-        time
-    );
+    updateWordProgress(time, activeLineIndex);
+    updateGapWordProgress(time);
 }
 
 
@@ -1179,61 +701,34 @@ function updateLyricsUI(time) {
 // ============================================================
 
 function updatePlaybackTime(time) {
-    foobarTime =
-        Number(time) || 0;
-
-    lastFoobarUpdate =
-        performance.now();
+    foobarTime = Number(time) || 0;
+    lastFoobarUpdate = performance.now();
 }
 
 
 // ============================================================
-// 60 FPS RENDER LOOP (WITH TIME OFFSET)
+// 60 FPS RENDER LOOP
 // ============================================================
 
 function renderLoop() {
-
     if (currentLyrics) {
+        const now = performance.now();
+        const delta = (now - lastFoobarUpdate) / 1000;
 
-        const now =
-            performance.now();
-
-
-        const delta =
-            (now - lastFoobarUpdate) /
-            1000;
-
-
-        let interpolatedTime =
-            foobarTime;
-
+        let interpolatedTime = foobarTime;
 
         if (delta < 0.5) {
-            interpolatedTime +=
-                delta;
+            interpolatedTime += delta;
         }
 
-
-        // Memasukkan logika timeOffset di sini
-        currentTime =
-            Math.max(0, interpolatedTime + timeOffset);
-
-
-        updateLyricsUI(
-            currentTime
-        );
+        currentTime = Math.max(0, interpolatedTime + timeOffset);
+        updateLyricsUI(currentTime);
     }
 
-
-    requestAnimationFrame(
-        renderLoop
-    );
+    requestAnimationFrame(renderLoop);
 }
 
-
-requestAnimationFrame(
-    renderLoop
-);
+requestAnimationFrame(renderLoop);
 
 
 // ============================================================
@@ -1272,50 +767,18 @@ if (btnPlus) {
 }
 
 if (romajiBtn) {
+    romajiBtn.addEventListener("click", () => {
+        isRomajiMode = !isRomajiMode;
+        romajiBtn.classList.toggle("active", isRomajiMode);
 
-    romajiBtn.addEventListener(
-        "click",
-        () => {
-
-            isRomajiMode =
-                !isRomajiMode;
-
-
-            romajiBtn.classList.toggle(
-                "active",
-                isRomajiMode
-            );
-
-
-            if (currentLyrics) {
-
-                renderLyricsDOM(
-                    currentLyrics
-                );
-
-
-                updateGapLineVisibility(
-                    currentTime
-                );
-
-
-                updateLineState(
-                    lastActiveLineIndex
-                );
-
-
-                updateWordProgress(
-                    currentTime,
-                    lastActiveLineIndex
-                );
-
-
-                updateGapWordProgress(
-                    currentTime
-                );
-            }
+        if (currentLyrics) {
+            renderLyricsDOM(currentLyrics);
+            updateGapLineVisibility(currentTime);
+            updateLineState(lastActiveLineIndex);
+            updateWordProgress(currentTime, lastActiveLineIndex);
+            updateGapWordProgress(currentTime);
         }
-    );
+    });
 }
 
 
@@ -1324,31 +787,18 @@ if (romajiBtn) {
 // ============================================================
 
 function loadLyrics(data) {
+    currentLyrics = addLongGapLines(data);
 
-    currentLyrics =
-        addLongGapLines(
-            data
-        );
-
-
-    // Reset offset ke 0 setiap lagu baru diputar
     timeOffset = 0;
     updateOffsetIndicator();
-
 
     foobarTime = 0;
     currentTime = 0;
 
-
     lastActiveLineIndex = -1;
     lastScrollLineIndex = -1;
 
-
-    renderLyricsDOM(
-        currentLyrics
-    );
-
-
+    renderLyricsDOM(currentLyrics);
     updateLyricsUI(0);
 }
 
@@ -1358,66 +808,30 @@ function loadLyrics(data) {
 // ============================================================
 
 async function fetchLyrics(metadata) {
-
     try {
+        const res = await fetch("http://localhost:3000/api/get-lyrics", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(metadata)
+        });
 
-        const res =
-            await fetch(
-                "http://localhost:3000/api/get-lyrics",
-                {
-                    method: "POST",
+        if (!res.ok) return null;
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+        const data = await res.json();
 
-                    body:
-                        JSON.stringify(
-                            metadata
-                        )
-                }
-            );
-
-
-        if (!res.ok) {
-            return null;
-        }
-
-
-        const data =
-            await res.json();
-
-
-        if (
-            data &&
-            data.type &&
-            Array.isArray(
-                data.lines
-            )
-        ) {
+        if (data && data.type && Array.isArray(data.lines)) {
             return data;
         }
 
-
-        if (
-            data &&
-            data.success &&
-            data.lyrics
-        ) {
+        if (data && data.success && data.lyrics) {
             return data.lyrics;
         }
 
-
         return null;
-
     } catch (err) {
-
-        console.error(
-            "[App] Gagal fetch lyrics:",
-            err
-        );
-
+        console.error("[App] Gagal fetch lyrics:", err);
         return null;
     }
 }
@@ -1427,49 +841,26 @@ async function fetchLyrics(metadata) {
 // FOOBAR2000 BRIDGE
 // ============================================================
 
-if (
-    typeof initFoobarBridge ===
-    "function"
-) {
-
+if (typeof initFoobarBridge === "function") {
     initFoobarBridge(
-
         async (trackMetadata) => {
+            currentLyrics = null;
+            container.innerHTML = "";
 
-            currentLyrics =
-                null;
+            lastActiveLineIndex = -1;
+            lastScrollLineIndex = -1;
 
-            container.innerHTML =
-                "";
-
-
-            lastActiveLineIndex =
-                -1;
-
-            lastScrollLineIndex =
-                -1;
-
-
-            const lyrics =
-                await fetchLyrics(
-                    trackMetadata
-                );
-
+            const lyrics = await fetchLyrics(trackMetadata);
 
             if (lyrics) {
-
-                loadLyrics(
-                    lyrics
-                );
+                loadLyrics(lyrics);
+                return lyrics;
             }
+
+            return null;
         },
-
-
         position => {
-
-            updatePlaybackTime(
-                position
-            );
+            updatePlaybackTime(position);
         }
     );
 }

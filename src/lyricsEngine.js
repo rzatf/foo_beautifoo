@@ -20,14 +20,42 @@ const { parseQQMusic } = require("./parsers/qqmusicParser");
 const { getLyrics: getLrclibLyrics } = require("./providers/lrclib");
 const { parseLrclib } = require("./parsers/lrclibParser");
 
-// Import Provider dan Parser Lokal
-// const { getLocalLyrics } = require("./providers/localLyrics");
-// const { parseLocalLrc } = require("./parsers/localParser");
+// Provider dan Parser Lokal (Diaktifkan)
+const { getLocalLyrics } = require("./providers/localLyrics");
+const { parseLocalLrc } = require("./parsers/localParser");
 
 /* =========================================================
- * FUNGSI HELPER VALIDASI METADATA (JUDUL & ARTIS)
+ * LIMITED CACHE 
  * ========================================================= */
+class LRUCache {
+    constructor(limit = 300) {
+        this.limit = limit;
+        this.cache = new Map();
+    }
 
+    get(key) {
+        if (!this.cache.has(key)) return null;
+        const val = this.cache.get(key);
+        this.cache.delete(key);
+        this.cache.set(key, val);
+        return val;
+    }
+
+    set(key, val) {
+        if (this.cache.has(key)) this.cache.delete(key);
+        else if (this.cache.size >= this.limit) {
+            // Hapus lagu paling lama
+            this.cache.delete(this.cache.keys().next().value);
+        }
+        this.cache.set(key, val);
+    }
+}
+
+const lyricsCache = new LRUCache(300);
+
+/* =========================================================
+ * HELPER METADATA & VALIDASI
+ * ========================================================= */
 function normalizeText(text) {
     return String(text || "")
         .toLowerCase()
@@ -38,11 +66,8 @@ function normalizeText(text) {
         .trim();
 }
 
-/**
- * Validasi ganda: memastikan Judul DAN Artis keduanya cocok.
- */
 function isMetadataMatch(itemMetadata, targetMetadata) {
-    if (!itemMetadata) return true; // Jika provider tidak mengembalikan objek metadata lagu, teruskan ke verifikasi berikutnya
+    if (!itemMetadata) return true;
 
     const targetTitle = normalizeText(targetMetadata?.title);
     const targetArtist = normalizeText(targetMetadata?.artist);
@@ -54,224 +79,135 @@ function isMetadataMatch(itemMetadata, targetMetadata) {
 
     if (!targetTitle || !targetArtist) return true;
 
-    // 1. Validasi Judul (Similarity score >= 0.5 ATAU substring match)
     const titleSim = stringSimilarity.compareTwoStrings(itemTitle, targetTitle);
     const isTitleValid =
         titleSim >= 0.5 ||
         itemTitle.includes(targetTitle) ||
         targetTitle.includes(itemTitle);
 
-    // 2. Validasi Artis (Similarity score >= 0.4 ATAU substring match)
     const artistSim = stringSimilarity.compareTwoStrings(itemArtist, targetArtist);
     const isArtistValid =
         artistSim >= 0.4 ||
         itemArtist.includes(targetArtist) ||
         targetArtist.includes(itemArtist);
 
-    // Keduanya WAJIB BERNILAI TRUE
     return isTitleValid && isArtistValid;
 }
 
-async function getLyrics(metadata) {
+/* =========================================================
+ * FUNGSI UTAMA ENGINE
+ * ========================================================= */
+/**
+ * @param {Object} metadata - Metadata lagu
+ * @param {Function} [onLocalFound] - Callback opsional saat lirik lokal langsung ketemu
+ */
+async function getLyrics(metadata, onLocalFound = null) {
+    const cacheKey = `${normalizeText(metadata?.artist)}_${normalizeText(metadata?.title)}`;
 
-    // Urutan array = URUTAN PRIORITAS
-    const providers = [
-        {
-            name: "NetEase",
-            fetch: getNetEaseLyrics,
-            parse: parseNetEase
-        },
-        {
-            name: "SyncLRC",
-            fetch: getSyncLRCLyrics,
-            parse: parseSyncLRC
-        },
-        {
-            name: "KaraLyr",
-            fetch: getKaralyrLyrics,
-            parse: parseKaralyr
-        },
-        {
-            name: "Kugou",
-            fetch: getKugouLyrics,
-            parse: parseKugou
-        },
-        {
-            name: "QQ Music",
-            fetch: getQQLyrics,
-            parse: parseQQMusic
-        },
-        {
-            name: "LRCLIB",
-            fetch: getLrclibLyrics,
-            parse: parseLrclib
+    // 1. CEK MAP CACHE (0 ms)
+    const cachedData = lyricsCache.get(cacheKey);
+    if (cachedData) {
+        console.log("[Engine] Lirik ditemukan di Memory Cache (300 Limit Map).");
+        return cachedData;
+    }
+
+    // 2. JIKA CACHE KOSONG -> AMBIL EMBEDDED / LOKAL DULUAN (UNTUK PLACEHOLDER)
+    let localLyrics = null;
+    try {
+        const rawLocal = await getLocalLyrics(metadata);
+        if (rawLocal) {
+            const parsedLocal = parseLocalLrc(rawLocal);
+            if (parsedLocal && (parsedLocal.lines?.length > 0 || parsedLocal.karaoke)) {
+                localLyrics = parsedLocal.karaoke || parsedLocal;
+                localLyrics.source = "Local / Embedded";
+
+                // Panggil callback agar UI langsung menampilkan lirik lokal tanpa menunggu online
+                if (typeof onLocalFound === "function") {
+                    onLocalFound(localLyrics);
+                }
+                console.log("[Engine] Lirik Embedded/Lokal ditemukan & ditayangkan sementara.");
+            }
         }
+    } catch (e) {
+        console.warn("[Engine] Gagal mengambil lirik lokal:", e.message);
+    }
+
+    // 3. JALANKAN PENCARIAN ONLINE SECEPATNYA (BACKGROUND CONCURRENT)
+    const providers = [
+        { name: "NetEase", fetch: getNetEaseLyrics, parse: parseNetEase },
+        { name: "SyncLRC", fetch: getSyncLRCLyrics, parse: parseSyncLRC },
+        { name: "KaraLyr", fetch: getKaralyrLyrics, parse: parseKaralyr },
+        { name: "Kugou", fetch: getKugouLyrics, parse: parseKugou },
+        { name: "QQ Music", fetch: getQQLyrics, parse: parseQQMusic },
+        { name: "LRCLIB", fetch: getLrclibLyrics, parse: parseLrclib }
     ];
 
-    console.log(
-        "[Engine] Mencari lirik dari semua provider secara concurrent..."
-    );
+    console.log("[Engine] Memulai pencarian provider online...");
 
-    // =========================================================
-    // JALANKAN SEMUA PROVIDER
-    // =========================================================
+    // Timeout longgar (8 detik) agar server China (Kugou/QQ/NetEase) sempat mengirim Karaoke
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
 
     const results = await Promise.all(
         providers.map(async (provider) => {
             try {
-                const raw = await provider.fetch(metadata);
-
-                if (!raw) {
-                    console.log(`[Engine] ${provider.name}: tidak ada hasil`);
-                    return null;
-                }
+                const raw = await provider.fetch(metadata, { signal: controller.signal });
+                if (!raw) return null;
 
                 const parsed = provider.parse(raw);
+                if (!parsed) return null;
 
-                if (!parsed) {
-                    console.log(`[Engine] ${provider.name}: gagal parse`);
-                    return null;
-                }
+                const songMeta = parsed.song || parsed.karaoke?.song || parsed.line?.song;
+                if (!isMetadataMatch(songMeta, metadata)) return null;
 
-                console.log(`[Engine] ${provider.name}: hasil parse`, parsed);
-
-                return {
-                    provider: provider.name,
-                    parsed
-                };
-
+                return { provider: provider.name, parsed };
             } catch (e) {
-                console.warn(`[Engine] ${provider.name} error:`, e.message);
                 return null;
             }
         })
     );
+    clearTimeout(timeout);
 
-    // =========================================================
-    // KUMPULKAN SEMUA KANDIDAT
-    // =========================================================
-
+    // Kumpulkan kandidat
     const karaokeCandidates = [];
     const lineCandidates = [];
 
-    for (const result of results) {
-        if (!result) continue;
+    for (const res of results) {
+        if (!res) continue;
+        const { provider, parsed } = res;
 
-        const { provider, parsed } = result;
-
-        // Ambil info metadata lagu dari parser
-        const songMetadata = parsed.song || parsed.karaoke?.song || parsed.line?.song;
-
-        // =========================================================
-        // VALIDASI 1: FILTER KANDIDAT PERTAMA (CEK METADATA PROVIDER)
-        // =========================================================
-        if (!isMetadataMatch(songMetadata, metadata)) {
-            console.warn(
-                `[Engine] [Validasi 1 Ditolak] ${provider}: Judul atau Artis tidak sesuai request.`
-            );
-            continue;
-        }
-
-        if (parsed.karaoke) {
-            karaokeCandidates.push({ provider, lyrics: parsed.karaoke });
-            console.log(`[Engine] ${provider}: kandidat KARAOKE ditemukan`);
-        }
-
-        if (parsed.line) {
-            lineCandidates.push({ provider, lyrics: parsed.line });
-            console.log(`[Engine] ${provider}: kandidat LINE ditemukan`);
-        }
-
-        if (parsed.type === "karaoke") {
-            karaokeCandidates.push({ provider, lyrics: parsed });
-            console.log(`[Engine] ${provider}: kandidat KARAOKE ditemukan`);
-        }
-
-        if (parsed.type === "line") {
-            lineCandidates.push({ provider, lyrics: parsed });
-            console.log(`[Engine] ${provider}: kandidat LINE ditemukan`);
+        if (parsed.karaoke || parsed.type === "karaoke") {
+            karaokeCandidates.push({ provider, lyrics: parsed.karaoke || parsed });
+        } else if (parsed.line || parsed.type === "line") {
+            lineCandidates.push({ provider, lyrics: parsed.line || parsed });
         }
     }
 
-    // =========================================================
-    // PILIH HASIL TERBAIK
-    // =========================================================
+    // PRIORITAS 1: Karaoke Online -> PRIORITAS 2: Line Online -> PRIORITAS 3: Local Fallback
+    let selected = karaokeCandidates[0] || lineCandidates[0] || null;
+    let finalLyrics = null;
 
-    let selected = null;
-
-    if (karaokeCandidates.length > 0) {
-        selected = karaokeCandidates[0];
-        console.log(`[Engine] Karaoke terpilih dari ${selected.provider}`);
-    } else if (lineCandidates.length > 0) {
-        selected = lineCandidates[0];
-        console.log(`[Engine] Line lyrics terpilih dari ${selected.provider}`);
+    if (selected) {
+        console.log(`[Engine] Lirik online terpilih dari ${selected.provider}`);
+        finalLyrics = selected.lyrics;
+        finalLyrics.source = selected.provider;
+    } else if (localLyrics) {
+        console.log("[Engine] Online tidak ada hasil. Memakai lirik Embedded/Lokal.");
+        finalLyrics = localLyrics;
     }
 
-    // =========================================================
-    // FALLBACK TERAKHIR: LOKAL & EMBEDDED
-    // =========================================================
-
-    // if (!selected) {
-    //     console.log("[Engine] Provider online tidak ada hasil. Mencoba fallback lokal...");
-
-    //     try {
-    //         const rawLocal = await getLocalLyrics(metadata);
-
-    //         if (rawLocal) {
-    //             const parsedLocal = parseLocalLrc(rawLocal);
-
-    //             if (parsedLocal && parsedLocal.lines && parsedLocal.lines.length > 0) {
-    //                 selected = {
-    //                     provider: "Local Storage / Embedded",
-    //                     lyrics: parsedLocal
-    //                 };
-    //                 console.log("[Engine] Lirik berhasil didapatkan dari file lokal/metadata.");
-    //             } else {
-    //                 console.log("[Engine] Local/Embedded: Gagal parse lirik lokal atau lirik kosong");
-    //             }
-    //         } else {
-    //             console.log("[Engine] Local/Embedded: Tidak ada file .lrc atau metadata lirik");
-    //         }
-    //     } catch (e) {
-    //         console.warn("[Engine] Local/Embedded error:", e.message);
-    //     }
-    // }
-
-    // =========================================================
-    // TIDAK ADA LIRIK
-    // =========================================================
-
-    if (!selected) {
-        console.log("[Engine] Tidak ada lirik ditemukan.");
+    if (!finalLyrics) {
+        console.log("[Engine] Tidak ada lirik ditemukan (Lokal & Online Kosong).");
         return null;
     }
 
-    // =========================================================
-    // VALIDASI 2: CEK VERIFIKASI AKHIR SEBELUM DITERUSKAN
-    // =========================================================
+    // Convert Romaji
+    await attachRomajiToLyrics(finalLyrics);
 
-    const finalSongMetadata = selected.lyrics.song;
+    // Simpan hasil terbaik ke Memory Map
+    lyricsCache.set(cacheKey, finalLyrics);
 
-    if (!isMetadataMatch(finalSongMetadata, metadata)) {
-        console.error(
-            `[Engine] [Validasi 2 Ditolak] Lirik terpilih dari ${selected.provider} gagal verifikasi akhir!`
-        );
-        return null;
-    }
-
-    console.log(`[Engine] [Validasi 2 Lolos] Metadata kandidat terpilih terverifikasi cocok.`);
-
-    // =========================================================
-    // ROMAJI & PENYESUAIAN APP.JS
-    // =========================================================
-
-    console.log(`[Engine] Mengonversi teks ${selected.provider} ke Romaji...`);
-    await attachRomajiToLyrics(selected.lyrics);
-
-    // Menyuntikkan nama provider ke dalam data lirik agar terbaca di console.log app.js
-    selected.lyrics.source = selected.provider;
-
-    return selected.lyrics;
+    return finalLyrics;
 }
 
 module.exports = { getLyrics };

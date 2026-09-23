@@ -152,7 +152,6 @@ async function tryStartBeaufooServer(nodePath) {
         }
 
         console.warn("[Bridge] Node berhasil dipanggil tetapi server tidak merespons dalam 6 detik.");
-        // Kembalikan executed: true agar pencarian kandidat dihentikan.
         return { success: false, executed: true };
 
     } catch (err) {
@@ -219,6 +218,37 @@ async function ensureBeaufooServer() {
 
 
 // =============================================================
+// Helper Log Lyric Information
+// =============================================================
+
+function logLyricInfo(metadata, lyrics, tag = "INFORMASI LIRIK DITERIMA") {
+    if (!lyrics) {
+        console.warn(`[Bridge] ❌ Tidak ada lirik yang ditemukan untuk lagu: "${metadata.title}" - ${metadata.artist}`);
+        return;
+    }
+
+    const providerSource = lyrics.source || "Unknown Provider";
+    const lyricType = lyrics.type || (lyrics.isKaraoke || lyrics.words ? "karaoke" : "line");
+    
+    const songArtist = Array.isArray(lyrics.song?.artist) 
+        ? lyrics.song.artist.join(", ") 
+        : (lyrics.song?.artist || metadata.artist || "N/A");
+
+    const songTitle = lyrics.song?.title || metadata.title || "N/A";
+    const songAlbum = lyrics.song?.album || metadata.album || "N/A";
+    const songDuration = lyrics.song?.duration || metadata.duration || 0;
+
+    console.log(`%c[Bridge] 🎵 --- ${tag} ---`, "color: #00ff88; font-weight: bold;");
+    console.log(` ├─ 📡 Provider Source : ${providerSource}`);
+    console.log(` ├─ 📝 Lyric Type      : ${String(lyricType).toUpperCase()}`);
+    console.log(` ├─ 🎵 Title           : ${songTitle}`);
+    console.log(` ├─ 👤 Artist          : ${songArtist}`);
+    console.log(` ├─ 💿 Album           : ${songAlbum}`);
+    console.log(` └─ ⏱️ Duration        : ${Number(songDuration).toFixed(2)} detik`);
+}
+
+
+// =============================================================
 // Foobar2000 Bridge
 // =============================================================
 
@@ -247,6 +277,49 @@ async function initFoobarBridge(onTrackChange, onTimeUpdate) {
         console.warn("[Bridge] WebView2 host object tidak ditemukan.");
     }
 
+    const handleTrackChange = async (metadata) => {
+        if (!onTrackChange) return;
+
+        let localOrMapFound = false;
+
+        try {
+            const onLocalOrMapFound = (tempLyrics) => {
+                localOrMapFound = true;
+                const source = tempLyrics.source || "Memory Cache (MAP) / Local";
+                
+                if (source.includes("Cache") || source.includes("MAP")) {
+                    console.log("%c[Bridge] ⚡ LIRIK DARI MEMORY CACHE (MAP) DITEMUKAN (INSTAN)", "color: #00e5ff; font-weight: bold;");
+                } else {
+                    console.log("%c[Bridge] 📁 LIRIK LOKAL/EMBEDDED DITEMUKAN (SEMENTARA)", "color: #ffaa00; font-weight: bold;");
+                }
+
+                logLyricInfo(metadata, tempLyrics, "LIRIK SEMENTARA / MAP TAMPIL");
+            };
+
+            const finalLyrics = await onTrackChange(metadata, onLocalOrMapFound);
+
+            if (finalLyrics) {
+                const finalSource = finalLyrics.source || "";
+                const isOnline = finalSource !== "Local / Embedded" && !finalSource.includes("Cache");
+
+                if (localOrMapFound && isOnline) {
+                    console.log(`%c[Bridge] 🚀 LIRIK ONLINE TERKINI (${finalSource}) BERHASIL MENDAPATKAN HASIL TERBAIK! MENIMPA LIRIK LOKAL.`, "color: #00ff88; font-weight: bold;");
+                } else if (localOrMapFound && !isOnline) {
+                    console.log("%c[Bridge] ℹ️ Pencarian Online tidak menemukan hasil lebih baik. Tetap menggunakan Lirik Lokal/Embedded.", "color: #ff9900;");
+                } else if (!localOrMapFound && isOnline) {
+                    console.log(`%c[Bridge] 🌐 Lirik berhasil didapatkan penuh dari Online Provider (${finalSource}).`, "color: #00ff88;");
+                }
+
+                logLyricInfo(metadata, finalLyrics, "INFORMASI LIRIK FINAL");
+            } else {
+                console.warn(`[Bridge] ❌ Tidak ada lirik yang ditemukan dari Lokal maupun Online untuk: "${metadata.title}"`);
+            }
+
+        } catch (err) {
+            console.error("[Bridge] Error saat mengeksekusi callback onTrackChange:", err);
+        }
+    };
+
     if (window.fb2k) {
         console.log("[Bridge] fb2k facade ditemukan.");
         try {
@@ -255,9 +328,8 @@ async function initFoobarBridge(onTrackChange, onTimeUpdate) {
                 try {
                     const metadata = await getTrackMetadata();
                     console.log("[Bridge] Metadata:", metadata);
-                    if (onTrackChange) {
-                        await onTrackChange(metadata);
-                    }
+                    
+                    await handleTrackChange(metadata);
                 } catch (err) {
                     console.error("[Bridge] Gagal mengambil metadata:", err);
                 }
@@ -278,7 +350,7 @@ async function initFoobarBridge(onTrackChange, onTimeUpdate) {
 
             if (metadata.title && metadata.artist) {
                 console.log("[Bridge] Meminta lyrics untuk current track...");
-                await onTrackChange(metadata);
+                await handleTrackChange(metadata);
             } else {
                 console.log("[Bridge] Tidak ada track yang sedang diputar.");
             }
@@ -301,17 +373,19 @@ async function initFoobarBridge(onTrackChange, onTimeUpdate) {
 
     if (host && onTimeUpdate) {
         let lastPosition = -1;
+        
+        // POLLING FREKUENSI DITURUNKAN KE 100ms AGAR BEBAS VIOLATION
         setInterval(() => {
             try {
                 const position = Number(host.position) || 0;
-                if (position !== lastPosition) {
+                if (Math.abs(position - lastPosition) > 0.02) {
                     lastPosition = position;
                     onTimeUpdate(position);
                 }
             } catch (err) {
                 console.warn("[Bridge] Gagal membaca position:", err);
             }
-        }, 50);
+        }, 100);
 
         console.log("[Bridge] Playback position polling aktif.");
     }
@@ -328,6 +402,7 @@ async function getTrackMetadata() {
     const title = await fb2k.invoke("playback.getFormattedText", { text: "%title%" });
     const artist = await fb2k.invoke("playback.getFormattedText", { text: "%artist%" });
     const album = await fb2k.invoke("playback.getFormattedText", { text: "%album%" });
+    const filePath = await fb2k.invoke("playback.getFormattedText", { text: "%path%" });
     
     let duration = 0;
 
@@ -355,6 +430,7 @@ async function getTrackMetadata() {
         title: String(title || "").trim(),
         artist: String(artist || "").trim(),
         album: String(album || "").trim(),
+        filePath: String(filePath || "").trim(),
         duration
     };
 }

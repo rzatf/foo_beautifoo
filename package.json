@@ -15,6 +15,7 @@
     "hangul-romanization": "^1.0.1",
     "kuroshiro": "^1.2.0",
     "kuroshiro-analyzer-kuromoji": "^1.1.0",
+    "music-metadata": "^7.14.0",
     "pinyin": "^4.0.0",
     "pinyin-pro": "^3.29.4",
     "string-similarity": "^4.0.4"
