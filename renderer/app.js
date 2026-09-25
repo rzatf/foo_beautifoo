@@ -1,5 +1,5 @@
 // ============================================================
-// Beaufoo - app.js (Optimized)
+// Beaufoo - app.js (Optimized with Force Reload)
 // ============================================================
 
 // ============================================================
@@ -19,6 +19,9 @@ let foobarTime = 0;
 let lastFoobarUpdate = performance.now();
 let staggerTimeoutId = null;
 
+// METADATA LAGU AKTIF
+let currentTrackMetadata = null;
+
 // STATE OFFSET (dalam detik)
 let timeOffset = 0;
 
@@ -27,6 +30,7 @@ const romajiBtn = document.getElementById("toggle-romaji");
 const btnMinus = document.getElementById("offset-minus");
 const btnPlus = document.getElementById("offset-plus");
 const offsetIndicator = document.getElementById("offset-indicator");
+const reloadBtn = document.getElementById("btn-reload");
 
 
 // ============================================================
@@ -436,7 +440,7 @@ function getScrollLineIndex(time) {
 
 
 // ============================================================
-// SCROLL ANIMATION (FORCED REFLOW FIXED)
+// SCROLL ANIMATION
 // ============================================================
 
 function scrollToActiveLine(scrollLineIndex) {
@@ -490,7 +494,6 @@ function scrollToActiveLine(scrollLineIndex) {
 
     container.scrollTop = targetScrollTop;
 
-    // KITA REMOVE VOID CONTAINER.OFFSETHIGHT AGAR BERJALAN MULUS DAN TIDAK PACK FORCED REFLOW
     requestAnimationFrame(() => {
         lineElements.forEach((el, index) => {
             const relativeIndex = index - (scrollLineIndex - 5);
@@ -742,14 +745,14 @@ function updateOffsetIndicator() {
         offsetIndicator.classList.add("hidden");
     } else {
         const sign = timeOffset > 0 ? "+" : "";
-        offsetIndicator.textContent = `${sign}${timeOffset.toFixed(1)}s`;
+        offsetIndicator.textContent = `\({sign}\){timeOffset.toFixed(1)}s`;
         offsetIndicator.classList.remove("hidden");
     }
 }
 
 
 // ============================================================
-// CONTROLS EVENT LISTENERS (ROMAJI & OFFSET)
+// CONTROLS EVENT LISTENERS (ROMAJI, OFFSET, & FORCE RELOAD)
 // ============================================================
 
 if (btnMinus) {
@@ -781,6 +784,27 @@ if (romajiBtn) {
     });
 }
 
+// LOGIKA TOMBOL FORCE RELOAD (DAPAT DIPANGGIL DARI POJOK KANAN BAWAH)
+if (reloadBtn) {
+    reloadBtn.addEventListener("click", async () => {
+        if (!currentTrackMetadata) return;
+
+        reloadBtn.classList.add("spinning");
+        console.log("[App] Force Reload dipicu: Menghapus cache & mencari ulang secara online...");
+
+        const freshLyrics = await fetchLyrics(currentTrackMetadata, true);
+
+        if (freshLyrics) {
+            loadLyrics(freshLyrics);
+            console.log("[App] Lirik online baru berhasil dimuat!");
+        } else {
+            console.warn("[App] Force reload gagal menemukan lirik online baru.");
+        }
+
+        reloadBtn.classList.remove("spinning");
+    });
+}
+
 
 // ============================================================
 // LOAD LYRICS
@@ -804,17 +828,19 @@ function loadLyrics(data) {
 
 
 // ============================================================
-// FETCH LYRICS
+// FETCH LYRICS (DENGAN DUKUNGAN FORCE RELOAD)
 // ============================================================
 
-async function fetchLyrics(metadata) {
+async function fetchLyrics(metadata, forceReload = false) {
     try {
+        currentTrackMetadata = metadata; // Simpan metadata lagu aktif
+
         const res = await fetch("http://localhost:3000/api/get-lyrics", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(metadata)
+            body: JSON.stringify({ ...metadata, forceReload })
         });
 
         if (!res.ok) return null;

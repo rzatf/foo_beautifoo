@@ -15,27 +15,62 @@
         <!-- Lyrics akan dirender oleh JavaScript -->
     </main>
 
-    <!-- Kontainer Tombol Kontrol (Offset & Romaji) -->
+    <!-- Kontrol bawah: Offset & Romaji -->
     <div id="controls-container">
-        <button id="offset-minus" class="ctrl-btn" title="(-0.5s)">-0.5s</button>
-        
+
+        <button
+            id="offset-minus"
+            class="ctrl-btn"
+            type="button"
+            title="Percepat lirik 0.5 detik"
+            aria-label="Percepat lirik 0.5 detik"
+        >
+            -0.5s
+        </button>
+
         <div class="romaji-wrapper">
-            <button id="toggle-romaji" title="Toggle Romaji Mode">R</button>
-            <span id="offset-indicator" class="offset-badge hidden">0.0s</span>
+            <button
+                id="toggle-romaji"
+                type="button"
+                title="Toggle Romaji Mode"
+                aria-label="Toggle Romaji Mode"
+            >
+                R
+            </button>
+
+            <span
+                id="offset-indicator"
+                class="offset-badge hidden"
+                aria-live="polite"
+            >
+                0.0s
+            </span>
         </div>
 
-        <button id="offset-plus" class="ctrl-btn" title="(+0.5s)">+0.5s</button>
+        <button
+            id="offset-plus"
+            class="ctrl-btn"
+            type="button"
+            title="Lambatkan lirik 0.5 detik"
+            aria-label="Lambatkan lirik 0.5 detik"
+        >
+            +0.5s
+        </button>
+
     </div>
+
+    <!-- Force reload -->
+    <button
+        id="btn-reload"
+        type="button"
+        title="Force Reload Lyrics"
+        aria-label="Force Reload Lyrics"
+    >
+        ↻
+    </button>
 
     <script src="../src/utils/bridge.js"></script>
     <script src="app.js"></script>
 
-    <!-- Auto-reload sederhana untuk development via XAMPP -->
-    <!-- <script>
-        setInterval(() => {
-            fetch(window.location.href, { method: 'HEAD' })
-                .then(res => {}).catch(() => {});
-        }, 2000);
-    </script> -->
 </body>
 </html>

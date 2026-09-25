@@ -556,6 +556,64 @@ body {
 
 
 /* ============================================================
+   BOTTOM RIGHT FORCE RELOAD BUTTON
+   ============================================================ */
+
+#btn-reload {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0.35;
+    transition: all 250ms ease;
+    outline: none;
+}
+
+#btn-reload:hover {
+    opacity: 1;
+    color: rgba(255, 255, 255, 1);
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
+    transform: scale(1.08);
+}
+
+#btn-reload:active {
+    transform: scale(0.95);
+}
+
+/* Animasi berputar saat Force Reload sedang mencari online */
+#btn-reload.spinning {
+    opacity: 0.8;
+    color: #4cd964;
+    border-color: rgba(76, 217, 100, 0.4);
+    animation: reloadSpin 800ms linear infinite;
+    pointer-events: none;
+}
+
+@keyframes reloadSpin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* ============================================================
    SMALL SCREEN
    ============================================================ */
 
