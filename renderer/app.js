@@ -735,7 +735,7 @@ requestAnimationFrame(renderLoop);
 
 
 // ============================================================
-// OFFSET INDICATOR UI HELPER
+// OFFSET INDICATOR UI HELPER (FIXED TEMPLATE LITERAL)
 // ============================================================
 
 function updateOffsetIndicator() {
@@ -745,7 +745,8 @@ function updateOffsetIndicator() {
         offsetIndicator.classList.add("hidden");
     } else {
         const sign = timeOffset > 0 ? "+" : "";
-        offsetIndicator.textContent = `\({sign}\){timeOffset.toFixed(1)}s`;
+        // Pakai gabungan string biasa biar aman dari error escaping
+        offsetIndicator.textContent = sign + timeOffset.toFixed(1) + "s";
         offsetIndicator.classList.remove("hidden");
     }
 }
