@@ -276,28 +276,41 @@ body {
 
 
 /* ============================================================
-   GAP CHARACTER / DOT (FIXED)
+   GAP CHARACTER / DOT (FIXED - RESTORED)
    ============================================================ */
 
 #lyrics .lyric-line.gap-line .char {
-    font-size: 0px;
-    color: transparent;
-    display: inline-block !important;
+    /* MENGATASI BENTROK LAYOUT DENGAN PARENT FLEXBOX */
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    
+    /* UKURAN LINGKARAN DOT */
     width: 14px !important;
     height: 14px !important;
     min-width: 14px !important;
     min-height: 14px !important;
-    aspect-ratio: 1 / 1;
-    flex: 0 0 14px;
+    flex: 0 0 14px !important;
+    border-radius: 50%;
+    
+    /* MENYEMBUNYIKAN HURUF/KARAKTER ASLI DILUAR BULATAN */
+    font-size: 0px !important;
+    color: transparent !important;
+    text-indent: -9999px;
+    overflow: hidden;
+    
+    /* TAMPILAN DEFATUL (BELUM AKTIF) */
     position: relative;
+    opacity: 0.25;
+    background: rgba(255, 255, 255, 0.22) !important;
+    
+    /* RESET EFEK LAIN AGAR BERSIH */
     filter: none !important;
     transform: translateY(0) scale(1);
     transform-origin: center center;
-    opacity: 0.25;
-    background: rgba(255, 255, 255, 0.22);
-    border-radius: 50%;
-    text-shadow: none;
+    text-shadow: none !important;
     animation: none;
+    
     transition:
         opacity 220ms ease,
         background 220ms ease,
