@@ -4,6 +4,11 @@ const crypto = require('crypto');
 const { getDeviceId } = require('./netease/deviceIds');
 
 const {
+    isTitleMatch: matcherIsTitleMatch,
+    isArtistMatch: matcherIsArtistMatch
+} = require('../utils/matcher');
+
+const {
     eapiParamsEncrypt,
     eapiResponseDecrypt,
     getAnonymousUsername
@@ -818,8 +823,7 @@ function isArtistMatch(
 
 
     const artists =
-        getArtists(song)
-            .map(normalizeText);
+        getArtists(song);
 
 
     if (!artists.length) {
@@ -828,63 +832,20 @@ function isArtistMatch(
 
 
     /*
-     * Exact artist.
+     * Gunakan matcher terpusat agar konsisten dengan verifikasi
+     * ulang di lyricsEngine. Menangani:
+     *
+     * - exact artist
+     * - multi artist: "Linkin Park feat. Kiiara"
+     * - pemisah: feat / ft / & / , / / / ; / x
+     *
+     * TANPA substring loosy (mis. "G" vs "G-Unit").
      */
 
-    if (
-        artists.some(
-            artist =>
-                artist === target
-        )
-    ) {
-        return true;
-    }
-
-
-    /*
-     * Contoh:
-     *
-     * target:
-     * Linkin Park feat. Kiiara
-     *
-     * NetEase:
-     * Linkin Park
-     * Kiiara
-     */
-
-    const targetParts =
-        target
-            .split(
-                /\s*(?:feat\.?|ft\.?|&|,|\/|;|\bx\b)\s*/i
-            )
-            .map(normalizeText)
-            .filter(Boolean);
-
-
-    if (
-        targetParts.length > 1
-    ) {
-
-        const matched =
-            targetParts.filter(
-                part =>
-                    artists.some(
-                        artist =>
-                            artist === part
-                    )
-            );
-
-
-        if (
-            matched.length ===
-            targetParts.length
-        ) {
-            return true;
-        }
-    }
-
-
-    return false;
+    return matcherIsArtistMatch(
+        artists,
+        targetArtist
+    );
 }
 
 
@@ -914,66 +875,19 @@ function isTitleMatch(
 
 
     /*
-     * Exact.
-     */
-
-    if (
-        song === target
-    ) {
-        return true;
-    }
-
-
-    /*
-     * Versi suffix:
+     * Gunakan matcher terpusat:
      *
-     * I'm Yours
-     * I'm Yours - Live
+     * - exact match
+     * - suffix versi ("- Live", "(Remastered)")
+     * - kemiripan Dice tinggi + panjang mirip
+     *
+     * TANPA substring loosy (mis. "Love" vs "Endless Love").
      */
 
-    if (
-        song.startsWith(
-            target + ' - '
-        )
-    ) {
-        return true;
-    }
-
-
-    if (
-        song.startsWith(
-            target + ' '
-        )
-    ) {
-
-        const suffix =
-            song
-                .slice(
-                    target.length
-                )
-                .trim();
-
-
-        if (
-            /^[-–—:]/.test(
-                suffix
-            )
-        ) {
-            return true;
-        }
-    }
-
-
-    if (
-        target.startsWith(
-            song + ' - '
-        )
-    ) {
-        return true;
-    }
-
-
-    return false;
+    return matcherIsTitleMatch(
+        songTitle,
+        targetTitle
+    );
 }
 
 

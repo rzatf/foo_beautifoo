@@ -3,6 +3,12 @@
 const axios = require('axios');
 const { qrcDecrypt } = require('../decryptor/qrc');
 
+const {
+    isTitleMatch,
+    isArtistMatch,
+    durationScore
+} = require('../utils/matcher');
+
 const QQMUSIC_API = 'https://u.y.qq.com/cgi-bin/musicu.fcg';
 
 
@@ -254,66 +260,30 @@ async function searchSongs(keyword, page = 1) {
 
 // ============================================================
 // SONG MATCHING
+//
+// Matching menggunakan modul matcher terpusat agar konsisten
+// dengan verifikasi ulang di lyricsEngine. Tidak ada lagi
+// substring loosy (mis. "Love" vs "Endless Love").
 // ============================================================
 
-function isTitleMatch(songTitle, targetTitle) {
-    const song = normalizeText(songTitle);
-    const target = normalizeText(targetTitle);
-
-    if (!song || !target) {
-        return false;
-    }
-
-    return (
-        song === target ||
-        song.includes(target) ||
-        target.includes(song)
-    );
+function isTitleMatchStrict(songTitle, targetTitle) {
+    return isTitleMatch(songTitle, targetTitle);
 }
 
 
-function isArtistMatch(songArtists, targetArtist) {
-    const target = normalizeText(targetArtist);
+function isArtistMatchStrict(songArtists, targetArtist) {
+    const list = Array.isArray(songArtists)
+        ? songArtists
+        : [songArtists];
 
-    if (!target) {
-        return false;
-    }
-
-    return songArtists.some(artist => {
-        const current = normalizeText(artist);
-
-        return (
-            current === target ||
-            current.includes(target) ||
-            target.includes(current)
-        );
-    });
+    return isArtistMatch(list, targetArtist);
 }
 
 
 function calculateDurationScore(song, targetDuration) {
     const songDuration = Number(song?.interval) || 0;
-    const duration = Number(targetDuration) || 0;
 
-    if (songDuration <= 0 || duration <= 0) {
-        return 0;
-    }
-
-    const diff = Math.abs(songDuration - duration);
-
-    if (diff <= 1) {
-        return 20;
-    }
-
-    if (diff <= 3) {
-        return 10;
-    }
-
-    if (diff <= 10) {
-        return 3;
-    }
-
-    return 0;
+    return Math.round(durationScore(songDuration, targetDuration) * 20);
 }
 
 
@@ -326,17 +296,31 @@ function rankSong(song, title, artist, duration) {
 
     // ========================================================
     // HARD REQUIREMENT:
-    // TITLE HARUS MATCH.
-    //
-    // Jangan pernah memilih lagu hanya karena artist/duration
-    // kalau title-nya salah.
+    // TITLE HARUS MATCH (ketat).
     // ========================================================
 
-    if (!isTitleMatch(songTitle, title)) {
+    if (!isTitleMatchStrict(songTitle, title)) {
         return null;
     }
 
     const artists = getArtists(song);
+
+    // ========================================================
+    // HARD REQUIREMENT:
+    // ARTIST HARUS MATCH.
+    //
+    // Mencegah salah ambil lagu dengan judul sama tapi artis
+    // berbeda.
+    // ========================================================
+
+    const artistOk =
+        artist && String(artist).trim()
+            ? isArtistMatchStrict(artists, artist)
+            : false;
+
+    if (!artistOk) {
+        return null;
+    }
 
     const normalizedSongTitle = normalizeText(songTitle);
     const normalizedTargetTitle = normalizeText(title);
@@ -348,15 +332,13 @@ function rankSong(song, title, artist, duration) {
         score += 100;
     }
 
-    // Partial title
+    // Partial title (versi)
     else {
-        score += 50;
+        score += 70;
     }
 
-    // Artist
-    if (isArtistMatch(artists, artist)) {
-        score += 50;
-    }
+    // Artist wajib benar -> selalu dapat poin.
+    score += 50;
 
     // Duration
     score += calculateDurationScore(song, duration);

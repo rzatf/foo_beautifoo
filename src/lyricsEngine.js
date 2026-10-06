@@ -1,8 +1,12 @@
 const fs = require("fs");
 const path = require("path");
-const stringSimilarity = require("string-similarity");
 
 const { attachRomajiToLyrics } = require("./utils/romaji");
+
+const {
+    verifyMetadata,
+    verifyLyricContent
+} = require("./utils/matcher");
 
 const { getLyrics: getNetEaseLyrics } = require("./providers/netease");
 const { parseNetEase } = require("./parsers/neteaseParser");
@@ -235,51 +239,29 @@ return String(text || "")
   return true;
   }
 
-  const targetTitle =
-  normalizeText(targetMetadata?.title);
+  // Diverifikasi dengan matcher terpusat:
+  // title + artist wajib benar, duration sebagai penguat.
+  const result = verifyMetadata(
+      {
+          title: itemMetadata.title,
+          artist: itemMetadata.artist,
+          duration: itemMetadata.duration
+      },
+      {
+          title: targetMetadata?.title,
+          artist: targetMetadata?.artist,
+          duration: targetMetadata?.duration
+      }
+  );
 
-  const targetArtist =
-  normalizeText(targetMetadata?.artist);
-
-  const itemTitle =
-  normalizeText(itemMetadata?.title);
-
-  const itemArtist =
-  Array.isArray(itemMetadata?.artist)
-  ? itemMetadata.artist
-  .map(normalizeText)
-  .join(" ")
-  : normalizeText(itemMetadata?.artist);
-
-  // Jika metadata target tidak lengkap,
-  // biarkan provider lolos.
-  if (!targetTitle || !targetArtist) {
-  return true;
+  if (!result.ok) {
+      console.warn(
+          "[Engine] Metadata tidak cocok (" +
+          result.reason + ")."
+      );
   }
 
-  const titleSim =
-  stringSimilarity.compareTwoStrings(
-  itemTitle,
-  targetTitle
-  );
-
-  const isTitleValid =
-  titleSim >= 0.5 ||
-  itemTitle.includes(targetTitle) ||
-  targetTitle.includes(itemTitle);
-
-  const artistSim =
-  stringSimilarity.compareTwoStrings(
-  itemArtist,
-  targetArtist
-  );
-
-  const isArtistValid =
-  artistSim >= 0.4 ||
-  itemArtist.includes(targetArtist) ||
-  targetArtist.includes(itemArtist);
-
-  return isTitleValid && isArtistValid;
+  return result.ok;
   }
 
 /**
@@ -657,6 +639,23 @@ for (const result of results) {
 
         console.warn(
             `[Engine] Ditolak: ${provider} mengembalikan lirik instrumental / tidak valid.`
+        );
+
+        continue;
+    }
+
+
+    // Verifikasi ulang isi lirik (menggantikan heuristik
+    // minimal & memblokir keyword sampah) dengan matcher
+    // terpusat.
+    const contentCheck =
+        verifyLyricContent(lyricsData);
+
+    if (!contentCheck.ok) {
+
+        console.warn(
+            `[Engine] Ditolak: ${provider} lirik tidak valid ` +
+            `(${contentCheck.reason}).`
         );
 
         continue;

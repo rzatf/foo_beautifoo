@@ -3,6 +3,11 @@
 const axios = require("axios");
 const crypto = require("crypto");
 
+const {
+    verifyMetadata,
+    splitArtists
+} = require("../utils/matcher");
+
 let krcDecrypt = null;
 
 try {
@@ -112,13 +117,51 @@ function normalizeSong(info) {
 async function searchSongs(keyword, signal) {
     const data = await kugouRequest({
         url: SEARCH_URL,
-        params: { sorttype: "0", keyword, pagesize: 5, page: 1 },
+        params: { sorttype: "0", keyword, pagesize: 10, page: 1 },
         module: "SearchSong",
         signal
     });
 
     const list = data?.data?.lists || [];
     return list.map(normalizeSong).filter(Boolean);
+}
+
+/**
+ * Pilih lagu kandidat terbaik dengan verifikasi title + artist
+ * + duration yang ketat. Jangan pernah asal ambil songs[0].
+ */
+function pickBestSong(songs, target) {
+    const ranked = [];
+
+    for (const song of songs) {
+        const result = verifyMetadata(
+            {
+                title: song.title,
+                artist: song.artist,
+                duration: song.duration
+            },
+            target
+        );
+
+        if (!result.ok) {
+            console.log(
+                `[Kugou] Tolak kandidat: ` +
+                `${song.artist?.join?.("/") || song.artist} - ` +
+                `${song.title} (${result.reason})`
+            );
+            continue;
+        }
+
+        ranked.push({ song, score: result.score });
+    }
+
+    if (!ranked.length) {
+        return null;
+    }
+
+    ranked.sort((a, b) => b.score - a.score);
+
+    return ranked[0].song;
 }
 
 async function searchLyrics(song, signal) {
@@ -155,33 +198,63 @@ async function getLyrics({ title, artist, album, duration }, options = {}) {
     try {
         if (!title) return null;
 
-        const artistText = Array.isArray(artist) ? artist.join(" ") : String(artist || "");
+        const artistText = Array.isArray(artist)
+            ? artist.join(" ")
+            : String(artist || "");
         const keyword = `${artistText} ${title}`.trim();
+
+        const target = {
+            title,
+            artist: Array.isArray(artist) ? artist : [artistText],
+            duration
+        };
 
         // 1. Search Song
         const songs = await searchSongs(keyword, options.signal);
         if (!songs || !songs.length) return null;
 
-        const song = songs[0];
+        // 2. Pilih lagu dengan verifikasi ketat (title + artist).
+        const song = pickBestSong(songs, target);
 
-        // 2. Search Lyrics List
+        if (!song) {
+            console.log(
+                `[Kugou] Tidak ada kandidat yang lolos verifikasi: ` +
+                `${artistText} - ${title}`
+            );
+
+            return null;
+        }
+
+        // 3. Search Lyrics List
         const candidates = await searchLyrics(song, options.signal);
         if (!candidates || !candidates.length) return null;
 
         const candidate = candidates[0];
 
-        // 3. Download Lyrics Content
+        // 4. Download Lyrics Content
         const data = await downloadLyrics(candidate, options.signal);
         if (!data || !data.content) return null;
 
+        // Gunakan metadata lagu ASLI dari pencarian untuk
+        // verifikasi ulang di lyricsEngine (bukan metadata request).
+        const songMeta = {
+            id: song.id,
+            title: song.title,
+            artist: splitArtists(song.artist),
+            album: song.album,
+            duration: song.duration
+        };
+
         if (data.contenttype === 2) {
             const text = Buffer.from(data.content, "base64").toString("utf8");
-            return text.trim() ? { rawLyric: text, source: "kugou", type: "line" } : null;
+            return text.trim()
+                ? { rawLyric: text, source: "kugou", type: "line", song: songMeta }
+                : null;
         }
 
         if (!krcDecrypt) return null;
 
-        // 4. Decrypt KRC
+        // 5. Decrypt KRC
         const lyric = krcDecrypt(data.content);
         if (!lyric?.trim()) return null;
 
@@ -189,7 +262,7 @@ async function getLyrics({ title, artist, album, duration }, options = {}) {
             rawLyric: lyric,
             source: "kugou",
             type: "karaoke",
-            song: { id: song.id, title: song.title, artist: song.artist, album: song.album, duration: song.duration }
+            song: songMeta
         };
     } catch (err) {
         return null;

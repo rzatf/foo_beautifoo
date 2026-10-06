@@ -508,6 +508,11 @@ function parseQQMusic(rawData) {
         return null;
     }
 
+    const songMeta =
+        typeof rawData === "object"
+            ? rawData.song || null
+            : null;
+
     const text =
         String(rawLyric).trim();
 
@@ -530,7 +535,8 @@ function parseQQMusic(rawData) {
         if (qrcResult) {
             return {
                 ...qrcResult,
-                source: "qqmusic"
+                source: "qqmusic",
+                song: songMeta
             };
         }
     }
@@ -550,7 +556,8 @@ function parseQQMusic(rawData) {
         if (lrcResult) {
             return {
                 ...lrcResult,
-                source: "qqmusic"
+                source: "qqmusic",
+                song: songMeta
             };
         }
     }
@@ -560,7 +567,16 @@ function parseQQMusic(rawData) {
      * 3. Plain text
      * -----------------------------------------------------
      */
-    return parsePlainText(text);
+    const plainResult = parsePlainText(text);
+
+    if (plainResult) {
+        return {
+            ...plainResult,
+            song: songMeta
+        };
+    }
+
+    return null;
 }
 
 module.exports = {

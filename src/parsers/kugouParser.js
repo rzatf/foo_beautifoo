@@ -64,6 +64,7 @@ function parseKugou(rawData) {
     return {
         type: "karaoke",
         source: "kugou",
+        song: rawData.song || null,
         lines: karaokeLines
     };
 }

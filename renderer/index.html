@@ -6,10 +6,34 @@
 
     <title>Beaufoo Lyrics</title>
 
+    <!-- Google Fonts (opsional: muat saat online, fallback ke font sistem) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Poppins:wght@500;600;700;800&family=Montserrat:wght@500;600;700;800&family=Lato:wght@400;700;900&family=Nunito:wght@600;700;800&family=Oswald:wght@400;600;700&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Sans+KR:wght@400;700;900&display=swap"
+    >
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
+
+    <!-- Layer background animated (fluid mesh ala Apple Music).
+         Hanya tampil saat: mode Dinamis + Penyesuaian = Animated.
+         Isi di-bangun statis di sini; warna & gambar mengikuti
+         var(--bg-cover-image) dari cover art yang sedang diputar. -->
+    <div id="bg-animated" aria-hidden="true">
+        <div class="bg-animated-mesh">
+            <span class="mesh-blob mesh-blob-1"></span>
+            <span class="mesh-blob mesh-blob-2"></span>
+            <span class="mesh-blob mesh-blob-3"></span>
+            <span class="mesh-blob mesh-blob-4"></span>
+            <span class="mesh-blob mesh-blob-5"></span>
+        </div>
+        <div class="bg-animated-liquid"></div>
+        <div class="bg-animated-grain"></div>
+    </div>
 
     <main id="lyrics">
         <!-- Lyrics akan dirender oleh JavaScript -->
@@ -68,6 +92,440 @@
     >
         ↻
     </button>
+
+    <!-- Settings toggle (kanan atas) -->
+    <button
+        id="btn-settings"
+        type="button"
+        title="Pengaturan Tampilan"
+        aria-label="Pengaturan Tampilan"
+        aria-expanded="false"
+    >
+        ⚙
+    </button>
+
+    <!-- Panel Pengaturan -->
+    <div id="settings-backdrop" class="hidden" aria-hidden="true"></div>
+
+    <aside
+        id="settings-panel"
+        class="hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Pengaturan Tampilan"
+    >
+        <header class="settings-header">
+            <h2>Pengaturan Tampilan</h2>
+            <button
+                id="settings-close"
+                type="button"
+                title="Tutup"
+                aria-label="Tutup pengaturan"
+            >
+                ✕
+            </button>
+        </header>
+
+        <div class="settings-body">
+
+            <!-- ===== BACKGROUND ===== -->
+            <section class="settings-group">
+                <h3 class="settings-group-title">
+                    <span class="group-icon">🎨</span> Latar Belakang
+                </h3>
+
+                <div class="bg-mode-tabs" role="tablist">
+                    <button
+                        type="button"
+                        class="bg-mode-tab"
+                        data-bg-mode="solid"
+                        role="tab"
+                    >
+                        Solid
+                    </button>
+                    <button
+                        type="button"
+                        class="bg-mode-tab"
+                        data-bg-mode="gradient"
+                        role="tab"
+                    >
+                        Gradient
+                    </button>
+                    <button
+                        type="button"
+                        class="bg-mode-tab"
+                        data-bg-mode="gradient4"
+                        role="tab"
+                    >
+                        4 Titik
+                    </button>
+                    <button
+                        type="button"
+                        class="bg-mode-tab"
+                        data-bg-mode="radial"
+                        role="tab"
+                    >
+                        Radial
+                    </button>
+                    <button
+                        type="button"
+                        class="bg-mode-tab"
+                        data-bg-mode="dynamic"
+                        role="tab"
+                    >
+                        Dinamis
+                    </button>
+                </div>
+
+                <!-- Solid mode -->
+                <div class="bg-section" data-bg-section="solid">
+                    <label class="settings-label" for="solid-color">
+                        Warna Solid
+                    </label>
+                    <div class="color-row">
+                        <input
+                            type="color"
+                            id="solid-color"
+                            class="color-input"
+                            value="#001410"
+                        >
+                        <input
+                            type="text"
+                            id="solid-color-hex"
+                            class="color-hex"
+                            spellcheck="false"
+                            value="#001410"
+                        >
+                    </div>
+                </div>
+
+                <!-- Gradient (linear 2 warna) -->
+                <div class="bg-section" data-bg-section="gradient">
+                    <div class="dual-color-grid">
+                        <div class="color-field">
+                            <span class="field-caption">Warna Awal</span>
+                            <div class="color-row">
+                                <input
+                                    type="color"
+                                    id="grad-a"
+                                    class="color-input"
+                                    value="#002621"
+                                >
+                                <input
+                                    type="text"
+                                    id="grad-a-hex"
+                                    class="color-hex"
+                                    spellcheck="false"
+                                    value="#002621"
+                                >
+                            </div>
+                        </div>
+                        <div class="color-field">
+                            <span class="field-caption">Warna Akhir</span>
+                            <div class="color-row">
+                                <input
+                                    type="color"
+                                    id="grad-b"
+                                    class="color-input"
+                                    value="#006a5a"
+                                >
+                                <input
+                                    type="text"
+                                    id="grad-b-hex"
+                                    class="color-hex"
+                                    spellcheck="false"
+                                    value="#006a5a"
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gradient 4 titik mode -->
+                <div class="bg-section" data-bg-section="gradient4">
+                    <div class="gradient-toolbar">
+                        <label class="settings-label" for="gradient-angle">
+                            Sudut
+                        </label>
+                        <input
+                            type="range"
+                            id="gradient-angle"
+                            class="settings-range"
+                            min="0"
+                            max="360"
+                            step="1"
+                            value="135"
+                        >
+                        <span id="gradient-angle-value" class="range-value">135°</span>
+                    </div>
+
+                    <div class="gradient-grid">
+                        <div class="corner-picker">
+                            <span class="corner-label">Kiri Atas</span>
+                            <input
+                                type="color"
+                                id="grad-c1"
+                                class="color-input corner-color"
+                                data-corner="1"
+                                value="#002621"
+                            >
+                        </div>
+                        <div class="corner-picker">
+                            <span class="corner-label">Kanan Atas</span>
+                            <input
+                                type="color"
+                                id="grad-c2"
+                                class="color-input corner-color"
+                                data-corner="2"
+                                value="#006a5a"
+                            >
+                        </div>
+                        <div class="corner-picker">
+                            <span class="corner-label">Kiri Bawah</span>
+                            <input
+                                type="color"
+                                id="grad-c3"
+                                class="color-input corner-color"
+                                data-corner="3"
+                                value="#003d33"
+                            >
+                        </div>
+                        <div class="corner-picker">
+                            <span class="corner-label">Kanan Bawah</span>
+                            <input
+                                type="color"
+                                id="grad-c4"
+                                class="color-input corner-color"
+                                data-corner="4"
+                                value="#000000"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Radial (preset) mode -->
+                <div class="bg-section" data-bg-section="radial">
+                    <p class="settings-hint">
+                        Gradien radial bawaan Beaufoo. Pilih Solid atau
+                        Gradient 4 Titik untuk kustom warna penuh.
+                    </p>
+                </div>
+
+                <!-- Dinamis (mengikuti cover art) -->
+                <div class="bg-section" data-bg-section="dynamic">
+                    <p class="settings-hint">
+                        Latar belakang mengikuti cover art lagu yang sedang
+                        diputar (otomatis berganti tiap ganti lagu).
+                    </p>
+
+                    <div class="settings-row">
+                        <span class="settings-label">Blur Cover</span>
+                        <input
+                            type="range"
+                            id="cover-blur"
+                            class="settings-range"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value="40"
+                        >
+                        <span id="cover-blur-value" class="range-value">40px</span>
+                    </div>
+
+                    <div class="settings-row">
+                        <span class="settings-label">Peredupan</span>
+                        <input
+                            type="range"
+                            id="cover-darken"
+                            class="settings-range"
+                            min="0"
+                            max="90"
+                            step="1"
+                            value="45"
+                        >
+                        <span id="cover-darken-value" class="range-value">45%</span>
+                    </div>
+
+                    <div class="settings-row">
+                        <span class="settings-label">Penyesuaian</span>
+                        <select id="cover-fit" class="settings-select">
+                            <option value="cover">Cover (penuh)</option>
+                            <option value="contain">Contain (utuh)</option>
+                            <option value="animated">Animated (fluid)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Overlay gelap supaya lirik tetap terbaca -->
+                <div class="settings-row">
+                    <span class="settings-label">Overlay Gelap</span>
+                    <input
+                        type="range"
+                        id="bg-overlay"
+                        class="settings-range"
+                        min="0"
+                        max="80"
+                        step="1"
+                        value="0"
+                    >
+                    <span id="bg-overlay-value" class="range-value">0%</span>
+                </div>
+            </section>
+
+            <!-- ===== TIPOGRAFI ===== -->
+            <section class="settings-group">
+                <h3 class="settings-group-title">
+                    <span class="group-icon">✍️</span> Tipografi
+                </h3>
+
+                <div class="settings-row">
+                    <span class="settings-label">Jenis Font</span>
+                    <select id="font-family" class="settings-select">
+                        <option value="system">System Default</option>
+                        <option value="inter">Inter</option>
+                        <option value="poppins">Poppins</option>
+                        <option value="montserrat">Montserrat</option>
+                        <option value="lato">Lato</option>
+                        <option value="nunito">Nunito</option>
+                        <option value="oswald">Oswald</option>
+                        <option value="noto-jp">Noto Sans JP</option>
+                        <option value="noto-kr">Noto Sans KR</option>
+                        <option value="serif">Serif</option>
+                        <option value="mono">Monospace</option>
+                    </select>
+                </div>
+
+                <div class="settings-row">
+                    <span class="settings-label">Ukuran Lirik</span>
+                    <input
+                        type="range"
+                        id="font-size"
+                        class="settings-range"
+                        min="20"
+                        max="72"
+                        step="1"
+                        value="36"
+                    >
+                    <span id="font-size-value" class="range-value">36px</span>
+                </div>
+
+                <div class="settings-row">
+                    <span class="settings-label">Warna Teks</span>
+                    <div class="color-row">
+                        <input
+                            type="color"
+                            id="text-color"
+                            class="color-input"
+                            value="#ffffff"
+                        >
+                        <input
+                            type="text"
+                            id="text-color-hex"
+                            class="color-hex"
+                            spellcheck="false"
+                            value="#ffffff"
+                        >
+                    </div>
+                </div>
+
+                <div class="settings-row">
+                    <span class="settings-label">Highlight Aktif</span>
+                    <div class="color-row">
+                        <input
+                            type="color"
+                            id="accent-color"
+                            class="color-input"
+                            value="#ffffff"
+                        >
+                        <input
+                            type="text"
+                            id="accent-color-hex"
+                            class="color-hex"
+                            spellcheck="false"
+                            value="#ffffff"
+                        >
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== TAMPILAN ===== -->
+            <section class="settings-group">
+                <h3 class="settings-group-title">
+                    <span class="group-icon">✨</span> Tampilan
+                </h3>
+
+                <div class="settings-row">
+                    <span class="settings-label">Opacity Lirik Pasif</span>
+                    <input
+                        type="range"
+                        id="idle-opacity"
+                        class="settings-range"
+                        min="10"
+                        max="100"
+                        step="1"
+                        value="35"
+                    >
+                    <span id="idle-opacity-value" class="range-value">35%</span>
+                </div>
+
+                <div class="settings-row">
+                    <span class="settings-label">Blur Lirik Pasif</span>
+                    <input
+                        type="range"
+                        id="idle-blur"
+                        class="settings-range"
+                        min="0"
+                        max="6"
+                        step="0.5"
+                        value="1.5"
+                    >
+                    <span id="idle-blur-value" class="range-value">1.5px</span>
+                </div>
+
+                <div class="settings-row">
+                    <span class="settings-label">Lebar Teks</span>
+                    <input
+                        type="range"
+                        id="line-width"
+                        class="settings-range"
+                        min="50"
+                        max="95"
+                        step="1"
+                        value="80"
+                    >
+                    <span id="line-width-value" class="range-value">80%</span>
+                </div>
+
+                <label class="settings-toggle-row">
+                    <input type="checkbox" id="glow-toggle" checked>
+                    <span>Efek Glow pada Lirik Aktif</span>
+                </label>
+
+                <label class="settings-toggle-row">
+                    <input type="checkbox" id="show-romaji-default">
+                    <span>Aktifkan Romaji saat mulai</span>
+                </label>
+            </section>
+
+        </div>
+
+        <footer class="settings-footer">
+            <button
+                id="settings-reset"
+                type="button"
+                class="settings-btn secondary"
+            >
+                Reset Default
+            </button>
+            <button
+                id="settings-done"
+                type="button"
+                class="settings-btn primary"
+            >
+                Selesai
+            </button>
+        </footer>
+    </aside>
 
     <script src="../src/utils/bridge.js"></script>
     <script src="app.js"></script>

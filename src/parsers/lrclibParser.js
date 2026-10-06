@@ -5,6 +5,15 @@ function parseLrclib(data) {
         return null;
     }
 
+    // Metadata lagu dari LRCLIB untuk verifikasi ulang.
+    const song = {
+        id: data.id ? String(data.id) : "",
+        title: data.trackName || "",
+        artist: data.artistName ? [data.artistName] : [],
+        album: data.albumName || "",
+        duration: Number(data.duration) || 0
+    };
+
     // HANYA gunakan syncedLyrics untuk lirik ber-timestamp.
     // Jangan fallback ke plainLyrics karena akan menghasilkan start: null
     // yang merusak siklus auto-scroll pada renderer.
@@ -15,6 +24,7 @@ function parseLrclib(data) {
             return {
                 type: "line",
                 source: "lrclib",
+                song,
                 lines
             };
         }

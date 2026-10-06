@@ -52,6 +52,7 @@ function parseMusixmatch(rawData) {
             return {
                 type: "karaoke",
                 source: "musixmatch",
+                song: rawData.song || null,
                 lines: lines
             };
         }
@@ -71,6 +72,7 @@ function parseMusixmatch(rawData) {
             return {
                 type: "line",
                 source: "musixmatch",
+                song: rawData.song || null,
                 lines: lines
             };
         } catch (e) {

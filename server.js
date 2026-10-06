@@ -3,7 +3,13 @@ const http = require("http");
 const { getLyrics } =
     require("./src/lyricsEngine");
 
+const { getCoverArt } =
+    require("./src/providers/coverArt");
+
 const PORT = 3000;
+
+// Cache sederhana cover art berdasar path file (maks ~300 entri)
+const coverCache = new Map();
 
 
 const server =
@@ -72,6 +78,141 @@ const server =
                         service:
                             "Beaufoo Lyrics API"
                     })
+                );
+
+                return;
+            }
+
+
+            // =================================================
+            // GET COVER ART (untuk background dinamis)
+            // =================================================
+
+            if (
+                req.method === "POST" &&
+                req.url === "/api/get-cover"
+            ) {
+
+                let coverBody = "";
+
+                req.on(
+                    "data",
+                    chunk => {
+                        coverBody += chunk.toString();
+                    }
+                );
+
+                req.on(
+                    "end",
+                    async () => {
+
+                        try {
+
+                            const payload =
+                                JSON.parse(coverBody);
+
+                            const filePath =
+                                payload && payload.filePath;
+
+                            if (!filePath) {
+
+                                res.writeHead(
+                                    400,
+                                    {
+                                        "Content-Type":
+                                            "application/json"
+                                    }
+                                );
+
+                                res.end(
+                                    JSON.stringify({
+                                        success: false,
+                                        error:
+                                            "filePath diperlukan."
+                                    })
+                                );
+
+                                return;
+                            }
+
+                            // Cache sederhana berdasar path file
+                            if (coverCache.has(filePath)) {
+
+                                res.writeHead(
+                                    200,
+                                    {
+                                        "Content-Type":
+                                            "application/json"
+                                    }
+                                );
+
+                                res.end(
+                                    JSON.stringify(
+                                        coverCache.get(filePath)
+                                    )
+                                );
+
+                                return;
+                            }
+
+                            const cover =
+                                await getCoverArt(filePath);
+
+                            const result = cover
+                                ? {
+                                    success: true,
+                                    dataUrl: cover.dataUrl,
+                                    source: cover.source
+                                }
+                                : {
+                                    success: false,
+                                    error:
+                                        "Cover art tidak ditemukan."
+                                };
+
+                            // Simpan ke cache (termasuk hasil kosong
+                            // supaya tidak spam baca file)
+                            if (coverCache.size > 300) {
+                                coverCache.clear();
+                            }
+                            coverCache.set(filePath, result);
+
+                            res.writeHead(
+                                200,
+                                {
+                                    "Content-Type":
+                                        "application/json"
+                                }
+                            );
+
+                            res.end(
+                                JSON.stringify(result)
+                            );
+
+                        }
+                        catch (err) {
+
+                            console.error(
+                                "[API] Error cover:",
+                                err
+                            );
+
+                            res.writeHead(
+                                500,
+                                {
+                                    "Content-Type":
+                                        "application/json"
+                                }
+                            );
+
+                            res.end(
+                                JSON.stringify({
+                                    success: false,
+                                    error: err.message
+                                })
+                            );
+                        }
+                    }
                 );
 
                 return;
@@ -180,23 +321,41 @@ const server =
                             );
 
 
+                            // Force reload: hapus cache lagu yang
+                            // sedang diputar lalu cari ulang online.
+                            const forceReload =
+                                Boolean(
+                                    metadata.forceReload
+                                );
+
+                            if (forceReload) {
+
+                                console.log(
+                                    "[API] Force Reload: cache lagu akan dihapus."
+                                );
+                            }
+
                             const lyrics =
-                                await getLyrics({
-                                    title:
-                                        metadata.title,
+                                await getLyrics(
+                                    {
+                                        title:
+                                            metadata.title,
 
-                                    artist:
-                                        metadata.artist,
+                                        artist:
+                                            metadata.artist,
 
-                                    album:
-                                        metadata.album ||
-                                        "",
+                                        album:
+                                            metadata.album ||
+                                            "",
 
-                                    duration:
-                                        Number(
-                                            metadata.duration
-                                        ) || 0
-                                });
+                                        duration:
+                                            Number(
+                                                metadata.duration
+                                            ) || 0
+                                    },
+                                    null,
+                                    forceReload
+                                );
 
 
                             // =================================

@@ -8,6 +8,7 @@ function parseKaralyr(data) {
     return {
         type: "karaoke",
         source: "karalyr",
+        song: data.song || null,
 
         lines: lines.map(line => ({
             start: line.start_ms / 1000,

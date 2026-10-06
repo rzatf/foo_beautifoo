@@ -877,6 +877,16 @@ if (typeof initFoobarBridge === "function") {
             lastActiveLineIndex = -1;
             lastScrollLineIndex = -1;
 
+            // Simpan metadata & ambil cover art untuk background dinamis
+            currentTrackMetadata = trackMetadata || null;
+
+            if (trackMetadata && trackMetadata.filePath) {
+                fetchCoverArt(trackMetadata.filePath);
+            } else {
+                currentCoverArt = null;
+                applySettings();
+            }
+
             const lyrics = await fetchLyrics(trackMetadata);
 
             if (lyrics) {
@@ -891,3 +901,655 @@ if (typeof initFoobarBridge === "function") {
         }
     );
 }
+
+
+// ============================================================
+// SETTINGS MODULE
+// ============================================================
+
+const SETTINGS_STORAGE_KEY = "beaufoo.settings.v1";
+
+// Nilai default (harus sinkron dengan CSS fallback & markup HTML)
+const DEFAULT_SETTINGS = {
+    bgMode: "radial",
+
+    solidColor: "#001410",
+
+    // Gradient linear (2 warna + sudut)
+    gradA: "#002621",
+    gradB: "#006a5a",
+    gradientAngle: 135,
+
+    // Gradient 4 titik (4 sudut)
+    gradC1: "#002621",
+    gradC2: "#006a5a",
+    gradC3: "#003d33",
+    gradC4: "#000000",
+
+    // Background dinamis (cover art)
+    coverBlur: 40,
+    coverDarken: 45,
+    coverFit: "cover",
+
+    bgOverlay: 0,
+
+    fontSize: 36,
+    fontFamily: "system",
+    textColor: "#ffffff",
+    accentColor: "#ffffff",
+
+    idleOpacity: 35,
+    idleBlur: 1.5,
+    lineWidth: 80,
+
+    glow: true,
+    romajiDefault: false
+};
+
+// Preset font yang tersedia di panel pengaturan
+const FONT_PRESETS = {
+    system:
+        "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif",
+    inter:
+        "\"Inter\", \"Segoe UI\", Roboto, sans-serif",
+    poppins:
+        "\"Poppins\", \"Segoe UI\", sans-serif",
+    montserrat:
+        "\"Montserrat\", \"Segoe UI\", sans-serif",
+    lato:
+        "\"Lato\", \"Segoe UI\", sans-serif",
+    nunito:
+        "\"Nunito\", \"Segoe UI\", sans-serif",
+    oswald:
+        "\"Oswald\", \"Segoe UI\", sans-serif",
+    "noto-jp":
+        "\"Noto Sans JP\", \"Yu Gothic\", \"Meiryo\", sans-serif",
+    "noto-kr":
+        "\"Noto Sans KR\", \"Malgun Gothic\", sans-serif",
+    serif:
+        "Georgia, \"Times New Roman\", serif",
+    mono:
+        "\"Consolas\", \"Courier New\", monospace"
+};
+
+// State cover art lagu yang sedang diputar
+let currentCoverArt = null;
+
+let appSettings = Object.assign({}, DEFAULT_SETTINGS);
+
+
+// ============================================================
+// HEX / RGB HELPERS
+// ============================================================
+
+function normalizeHex(value, fallback) {
+    if (typeof value !== "string") return fallback;
+
+    let hex = value.trim().toLowerCase();
+
+    if (!hex.startsWith("#")) {
+        hex = "#" + hex;
+    }
+
+    // #abc -> #aabbcc
+    if (/^#[0-9a-f]{3}$/.test(hex)) {
+        hex =
+            "#" +
+            hex[1] + hex[1] +
+            hex[2] + hex[2] +
+            hex[3] + hex[3];
+    }
+
+    if (/^#[0-9a-f]{6}$/.test(hex)) {
+        return hex;
+    }
+
+    return fallback;
+}
+
+function hexToRgbTriplet(hex) {
+    const clean = normalizeHex(hex, "#ffffff").slice(1);
+
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+
+    return r + ", " + g + ", " + b;
+}
+
+
+// ============================================================
+// LOAD / SAVE SETTINGS
+// ============================================================
+
+function loadSettings() {
+    try {
+        const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            appSettings = Object.assign(
+                {},
+                DEFAULT_SETTINGS,
+                parsed
+            );
+        }
+    } catch (err) {
+        console.warn("[Settings] Gagal memuat pengaturan:", err);
+    }
+}
+
+function saveSettings() {
+    try {
+        localStorage.setItem(
+            SETTINGS_STORAGE_KEY,
+            JSON.stringify(appSettings)
+        );
+    } catch (err) {
+        console.warn("[Settings] Gagal menyimpan pengaturan:", err);
+    }
+}
+
+
+// ============================================================
+// THEME APPLICATION
+// ============================================================
+
+function buildActiveBackground(s) {
+    // ---- Solid ----
+    if (s.bgMode === "solid") {
+        return s.solidColor;
+    }
+
+    // ---- Gradient 4 Titik (4 sudut warna berbeda) ----
+    if (s.bgMode === "gradient4") {
+        const angle = s.gradientAngle + "deg";
+
+        // Dua linear-gradient diagonal disilangkan agar tiap sudut
+        // memakai warnanya sendiri (efek "4 titik").
+        return (
+            "linear-gradient(" + angle + ", " +
+            s.gradC1 + " 0%, " + s.gradC2 + " 100%), " +
+            "linear-gradient(" + (s.gradientAngle + 90) + "deg, " +
+            s.gradC3 + " 0%, transparent 60%), " +
+            "linear-gradient(" + (s.gradientAngle - 90) + "deg, " +
+            s.gradC4 + " 0%, transparent 60%)"
+        );
+    }
+
+    // ---- Gradient (linear 2 warna + sudut) ----
+    if (s.bgMode === "gradient") {
+        const angle = s.gradientAngle + "deg";
+        return "linear-gradient(" + angle + ", " + s.gradA + ", " + s.gradB + ")";
+    }
+
+    // ---- Dinamis (mengikuti cover art lagu) ----
+    if (s.bgMode === "dynamic") {
+        return "var(--bg-dynamic)";
+    }
+
+    // ---- Radial (preset default) ----
+    return "var(--bg-radial)";
+}
+
+// Ambil cover art lagu aktif dari server lalu terapkan ke background.
+async function fetchCoverArt(filePath) {
+    if (!filePath) {
+        currentCoverArt = null;
+        applySettings();
+        return;
+    }
+
+    try {
+        const res = await fetch("http://127.0.0.1:3000/api/get-cover", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ filePath })
+        });
+
+        if (!res.ok) {
+            currentCoverArt = null;
+            applySettings();
+            return;
+        }
+
+        const data = await res.json();
+
+        currentCoverArt =
+            data && data.success && data.dataUrl ? data.dataUrl : null;
+
+        applySettings();
+    } catch (err) {
+        console.warn("[App] Gagal mengambil cover art:", err);
+        currentCoverArt = null;
+        applySettings();
+    }
+}
+
+function applySettings() {
+    const root = document.body.style;
+    const s = appSettings;
+
+    // ---- Background ----
+    root.setProperty("--bg-solid", s.solidColor);
+
+    // Gradient linear
+    root.setProperty("--bg-grad-a", s.gradA);
+    root.setProperty("--bg-grad-b", s.gradB);
+
+    // Gradient 4 titik
+    root.setProperty("--bg-c1", s.gradC1);
+    root.setProperty("--bg-c2", s.gradC2);
+    root.setProperty("--bg-c3", s.gradC3);
+    root.setProperty("--bg-c4", s.gradC4);
+
+    root.setProperty("--bg-angle", s.gradientAngle + "deg");
+    root.setProperty("--bg-overlay", (s.bgOverlay / 100).toString());
+
+    // Dinamis (cover art)
+    root.setProperty("--cover-blur", s.coverBlur + "px");
+    root.setProperty("--cover-darken", (s.coverDarken / 100).toString());
+
+    // Mode Animated (fluid mesh ala Apple Music) memakai cover penuh,
+    // jadi paksa fit "cover" agar blob mesh punya sumber warna yang utuh.
+    const isAnimated =
+        s.bgMode === "dynamic" && s.coverFit === "animated";
+
+    root.setProperty("--cover-size", isAnimated ? "cover" : s.coverFit);
+
+    const coverUrl = currentCoverArt
+        ? "url(\"" + currentCoverArt + "\")"
+        : "none";
+
+    root.setProperty("--bg-cover-image", coverUrl);
+
+    // Background dinamis: cover ter-blur dirender lewat body::after.
+    // Body cukup pakai warna dasar gelap agar tidak ada cover tajam ganda.
+    root.setProperty("--bg-dynamic", "#000000");
+
+    root.setProperty("--bg-active", buildActiveBackground(s));
+
+    // Aktifkan layer cover ter-blur hanya saat mode dinamis
+    document.body.classList.toggle("bg-dynamic", s.bgMode === "dynamic");
+
+    // Layer animated (mesh gradient + liquid distortion) hanya saat dinamis + fit animated
+    document.body.classList.toggle("bg-animated", isAnimated);
+
+    // ---- Tipografi ----
+    root.setProperty("--lyric-font-size", s.fontSize + "px");
+
+    const fontStack =
+        FONT_PRESETS[s.fontFamily] || FONT_PRESETS.system;
+
+    root.setProperty("--lyric-font-family", fontStack);
+
+    root.setProperty("--lyric-color", hexToRgbTriplet(s.textColor));
+    root.setProperty("--accent-rgb", hexToRgbTriplet(s.accentColor));
+
+    // ---- Tampilan ----
+    root.setProperty(
+        "--lyric-idle-opacity",
+        (s.idleOpacity / 100).toString()
+    );
+    root.setProperty("--lyric-idle-blur", s.idleBlur + "px");
+    root.setProperty("--lyric-width", s.lineWidth + "%");
+
+    // ---- Glow toggle ----
+    document.body.classList.toggle("no-glow", !s.glow);
+
+    // ---- Romaji default ----
+    if (romajiBtn && s.romajiDefault && !isRomajiMode) {
+        isRomajiMode = true;
+        romajiBtn.classList.add("active");
+    }
+}
+
+
+// ============================================================
+// SETTINGS UI WIRING
+// ============================================================
+
+const settingsBtn = document.getElementById("btn-settings");
+const settingsPanel = document.getElementById("settings-panel");
+const settingsBackdrop = document.getElementById("settings-backdrop");
+const settingsClose = document.getElementById("settings-close");
+const settingsDone = document.getElementById("settings-done");
+const settingsReset = document.getElementById("settings-reset");
+
+function openSettings() {
+    if (!settingsPanel) return;
+
+    settingsPanel.classList.remove("hidden");
+    if (settingsBackdrop) settingsBackdrop.classList.remove("hidden");
+
+    settingsPanel.setAttribute("aria-hidden", "false");
+    if (settingsBtn) {
+        settingsBtn.classList.add("active");
+        settingsBtn.setAttribute("aria-expanded", "true");
+    }
+}
+
+function closeSettings() {
+    if (!settingsPanel) return;
+
+    settingsPanel.classList.add("hidden");
+    if (settingsBackdrop) settingsBackdrop.classList.add("hidden");
+
+    settingsPanel.setAttribute("aria-hidden", "true");
+    if (settingsBtn) {
+        settingsBtn.classList.remove("active");
+        settingsBtn.setAttribute("aria-expanded", "false");
+    }
+}
+
+// Sync semua kontrol UI dengan appSettings saat ini
+function syncSettingsUI() {
+    const s = appSettings;
+
+    // Tabs mode background
+    document.querySelectorAll(".bg-mode-tab").forEach(tab => {
+        tab.classList.toggle(
+            "active",
+            tab.dataset.bgMode === s.bgMode
+        );
+    });
+
+    document.querySelectorAll(".bg-section").forEach(sec => {
+        sec.classList.toggle(
+            "visible",
+            sec.dataset.bgSection === s.bgMode
+        );
+    });
+
+    // Solid
+    setInputValue("solid-color", s.solidColor);
+    setInputValue("solid-color-hex", s.solidColor);
+
+    // Gradient linear (2 warna)
+    setInputValue("grad-a", s.gradA);
+    setInputValue("grad-a-hex", s.gradA);
+    setInputValue("grad-b", s.gradB);
+    setInputValue("grad-b-hex", s.gradB);
+
+    // Gradient corners
+    setInputValue("grad-c1", s.gradC1);
+    setInputValue("grad-c2", s.gradC2);
+    setInputValue("grad-c3", s.gradC3);
+    setInputValue("grad-c4", s.gradC4);
+
+    // Angle
+    setInputValue("gradient-angle", s.gradientAngle);
+    setText("gradient-angle-value", s.gradientAngle + "°");
+
+    // Dinamis (cover art)
+    setInputValue("cover-blur", s.coverBlur);
+    setText("cover-blur-value", s.coverBlur + "px");
+    setInputValue("cover-darken", s.coverDarken);
+    setText("cover-darken-value", s.coverDarken + "%");
+    setInputValue("cover-fit", s.coverFit);
+
+    // Overlay
+    setInputValue("bg-overlay", s.bgOverlay);
+    setText("bg-overlay-value", s.bgOverlay + "%");
+
+    // Typography
+    setInputValue("font-size", s.fontSize);
+    setText("font-size-value", s.fontSize + "px");
+    setInputValue("font-family", s.fontFamily);
+    setInputValue("text-color", s.textColor);
+    setInputValue("text-color-hex", s.textColor);
+    setInputValue("accent-color", s.accentColor);
+    setInputValue("accent-color-hex", s.accentColor);
+
+    // Appearance
+    setInputValue("idle-opacity", s.idleOpacity);
+    setText("idle-opacity-value", s.idleOpacity + "%");
+    setInputValue("idle-blur", s.idleBlur);
+    setText("idle-blur-value", s.idleBlur + "px");
+    setInputValue("line-width", s.lineWidth);
+    setText("line-width-value", s.lineWidth + "%");
+
+    setChecked("glow-toggle", s.glow);
+    setChecked("show-romaji-default", s.romajiDefault);
+}
+
+function setInputValue(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.value = value;
+}
+
+function setText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+}
+
+function setChecked(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!value;
+}
+
+// Update satu properti + apply + save
+function updateSetting(key, value) {
+    appSettings[key] = value;
+    applySettings();
+    saveSettings();
+}
+
+
+// ============================================================
+// SETTINGS EVENT BINDINGS
+// ============================================================
+
+function bindSettingsEvents() {
+    // Buka / tutup panel
+    if (settingsBtn) {
+        settingsBtn.addEventListener("click", () => {
+            const isHidden = settingsPanel.classList.contains("hidden");
+            if (isHidden) {
+                syncSettingsUI();
+                openSettings();
+            } else {
+                closeSettings();
+            }
+        });
+    }
+
+    if (settingsClose) settingsClose.addEventListener("click", closeSettings);
+    if (settingsDone) settingsDone.addEventListener("click", closeSettings);
+    if (settingsBackdrop) {
+        settingsBackdrop.addEventListener("click", closeSettings);
+    }
+
+    document.addEventListener("keydown", e => {
+        if (e.key === "Escape" && settingsPanel &&
+            !settingsPanel.classList.contains("hidden")) {
+            closeSettings();
+        }
+    });
+
+    // ---- Background mode tabs ----
+    document.querySelectorAll(".bg-mode-tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+            const mode = tab.dataset.bgMode;
+            updateSetting("bgMode", mode);
+            syncSettingsUI();
+
+            // Saat memilih mode dinamis, pastikan cover sudah dimuat
+            if (mode === "dynamic" && currentTrackMetadata?.filePath) {
+                fetchCoverArt(currentTrackMetadata.filePath);
+            }
+        });
+    });
+
+    // ---- Solid color ----
+    bindColorPair("solid-color", "solid-color-hex", "solidColor");
+
+    // ---- Gradient linear (2 warna) ----
+    bindColorPair("grad-a", "grad-a-hex", "gradA", "gradient");
+    bindColorPair("grad-b", "grad-b-hex", "gradB", "gradient");
+
+    // ---- Gradient corners ----
+    bindColorPair("grad-c1", null, "gradC1", "gradient4");
+    bindColorPair("grad-c2", null, "gradC2", "gradient4");
+    bindColorPair("grad-c3", null, "gradC3", "gradient4");
+    bindColorPair("grad-c4", null, "gradC4", "gradient4");
+
+    // ---- Gradient angle ----
+    bindRange("gradient-angle", "gradient-angle-value", "gradientAngle",
+        v => v + "°", null);
+
+    // ---- Dinamis (cover art) ----
+    bindRange("cover-blur", "cover-blur-value", "coverBlur",
+        v => v + "px", "dynamic");
+    bindRange("cover-darken", "cover-darken-value", "coverDarken",
+        v => v + "%", "dynamic");
+    bindSelect("cover-fit", "coverFit", "dynamic");
+
+    // ---- Overlay ----
+    bindRange("bg-overlay", "bg-overlay-value", "bgOverlay",
+        v => v + "%", null);
+
+    // ---- Typography ----
+    bindRange("font-size", "font-size-value", "fontSize",
+        v => v + "px", null);
+    bindSelect("font-family", "fontFamily", null);
+    bindColorPair("text-color", "text-color-hex", "textColor");
+    bindColorPair("accent-color", "accent-color-hex", "accentColor");
+
+    // ---- Appearance ----
+    bindRange("idle-opacity", "idle-opacity-value", "idleOpacity",
+        v => v + "%", null);
+    bindRange("idle-blur", "idle-blur-value", "idleBlur",
+        v => v + "px", null);
+    bindRange("line-width", "line-width-value", "lineWidth",
+        v => v + "%", null);
+
+    bindCheckbox("glow-toggle", "glow");
+    bindCheckbox("show-romaji-default", "romajiDefault", () => {
+        if (romajiBtn) {
+            isRomajiMode = appSettings.romajiDefault;
+            romajiBtn.classList.toggle("active", isRomajiMode);
+            if (currentLyrics) {
+                renderLyricsDOM(currentLyrics);
+                updateGapLineVisibility(currentTime);
+                updateLineState(lastActiveLineIndex);
+                updateWordProgress(currentTime, lastActiveLineIndex);
+                updateGapWordProgress(currentTime);
+            }
+        }
+    });
+
+    // ---- Reset ----
+    if (settingsReset) {
+        settingsReset.addEventListener("click", () => {
+            appSettings = Object.assign({}, DEFAULT_SETTINGS);
+            applySettings();
+            saveSettings();
+            syncSettingsUI();
+        });
+    }
+}
+
+// Range slider -> value label + setting
+function bindRange(rangeId, valueId, key, formatter, forceBgMode) {
+    const range = document.getElementById(rangeId);
+    if (!range) return;
+
+    range.addEventListener("input", () => {
+        const value = parseFloat(range.value);
+        updateSetting(key, value);
+
+        if (forceBgMode && appSettings.bgMode !== forceBgMode) {
+            updateSetting("bgMode", forceBgMode);
+        }
+
+        if (valueId) setText(valueId, formatter(value));
+
+        // Sinkronkan tab & section jika bgMode dipaksa
+        if (forceBgMode) syncSettingsUI();
+    });
+}
+
+// Pasangan color picker + input hex
+function bindColorPair(colorId, hexId, key, forceBgMode) {
+    const colorEl = document.getElementById(colorId);
+    const hexEl = hexId ? document.getElementById(hexId) : null;
+
+    const forceMode = () => {
+        if (forceBgMode && appSettings.bgMode !== forceBgMode) {
+            updateSetting("bgMode", forceBgMode);
+            syncSettingsUI();
+        }
+    };
+
+    if (colorEl) {
+        colorEl.addEventListener("input", () => {
+            const hex = normalizeHex(colorEl.value, appSettings[key]);
+            updateSetting(key, hex);
+            if (hexEl) hexEl.value = hex;
+            forceMode();
+        });
+    }
+
+    if (hexEl) {
+        const commitHex = () => {
+            const hex = normalizeHex(hexEl.value, appSettings[key]);
+            updateSetting(key, hex);
+            hexEl.value = hex;
+            if (colorEl) colorEl.value = hex;
+            forceMode();
+        };
+
+        hexEl.addEventListener("change", commitHex);
+        hexEl.addEventListener("blur", commitHex);
+    }
+}
+
+// Dropdown native <select> -> setting
+function bindSelect(id, key, forceBgMode) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.addEventListener("change", () => {
+        updateSetting(key, el.value);
+
+        if (forceBgMode && appSettings.bgMode !== forceBgMode) {
+            updateSetting("bgMode", forceBgMode);
+            syncSettingsUI();
+        }
+    });
+}
+
+// Toggle checkbox
+function bindCheckbox(id, key, onAfter) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.addEventListener("change", () => {
+        updateSetting(key, el.checked);
+        if (typeof onAfter === "function") onAfter();
+    });
+}
+
+
+// ============================================================
+// SETTINGS INIT
+// ============================================================
+
+function initSettings() {
+    loadSettings();
+    applySettings();
+
+    if (settingsBtn) {
+        bindSettingsEvents();
+        syncSettingsUI();
+    }
+
+    console.log("[Settings] Dimuat:", appSettings);
+}
+
+initSettings();
+
+

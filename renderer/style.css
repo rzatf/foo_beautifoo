@@ -14,7 +14,53 @@ body {
 }
 
 body {
-    background:
+    /* ===== BACKGROUND VARIABLES (dikontrol oleh Settings) ===== */
+    --bg-mode: radial;
+
+    /* Solid */
+    --bg-solid: #001410;
+
+    /* Gradient linear (2 warna) */
+    --bg-grad-a: #002621;
+    --bg-grad-b: #006a5a;
+
+    /* Gradient 4 titik */
+    --bg-c1: #002621;
+    --bg-c2: #006a5a;
+    --bg-c3: #003d33;
+    --bg-c4: #000000;
+    --bg-angle: 135deg;
+
+    /* Dinamis (cover art) */
+    --bg-cover-image: none;
+    --bg-dynamic: var(--bg-radial);
+    --cover-blur: 40px;
+    --cover-darken: 0.45;
+    --cover-size: cover;
+
+    /* Animated (fluid mesh) di atas cover art */
+    --animated-blur: 64px;
+    --animated-darken: 0.15;
+
+    /* Overlay gelap di atas background (0..0.8) */
+    --bg-overlay: 0;
+
+    /* Tipografi */
+    --lyric-font-size: 36px;
+    --lyric-font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
+    --lyric-color: 255, 255, 255;
+    --accent-rgb: 255, 255, 255;
+    --lyric-idle-opacity: 0.35;
+    --lyric-idle-blur: 1.5px;
+    --lyric-width: 80%;
+
+    /* Preset radial (bawaan Beaufoo) */
+    --bg-radial:
         radial-gradient(
             circle at 100% 100%,
             rgba(0, 106, 74, 0.4) 0%,
@@ -27,18 +73,454 @@ body {
         ),
         rgba(0, 0, 0, 1);
 
-    background-blend-mode: normal;
+    /* Background terhitung (di-set oleh JS / fallback) */
+    --bg-active: var(--bg-radial);
+
+    background: var(--bg-active);
+    background-size: var(--cover-size, cover);
+    background-position: center;
+    background-repeat: no-repeat;
 
     color: rgba(255, 255, 255, 1);
 
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
+    font-family: var(--lyric-font-family, -apple-system, "Segoe UI", sans-serif);
 
     overflow: hidden;
+
+    transition: background-color 320ms ease;
 }
+
+/* Layer cover art ter-blur untuk background dinamis (di belakang lirik) */
+body::after {
+    content: "";
+    position: fixed;
+    inset: -80px;
+    background-image:
+        linear-gradient(
+            rgba(0, 0, 0, var(--cover-darken, 0.45)),
+            rgba(0, 0, 0, var(--cover-darken, 0.45))
+        ),
+        var(--bg-cover-image);
+    background-size: cover, var(--cover-size, cover);
+    background-position: center, center;
+    background-repeat: no-repeat, no-repeat;
+    filter: blur(var(--cover-blur, 40px));
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+    transition: opacity 420ms ease;
+}
+
+body.bg-dynamic::after {
+    opacity: 1;
+}
+
+/* Dinamis + Animated ("blurred fluid cover art" ala Apple Music):
+   Cover art dipakai sebagai SUMBER WARNA ter-blur besar, lalu ditimpa
+   beberapa blob cover yang mengalir lembut + layer liquid distortion.
+   Efek warna yang bergerak inilah yang membuat tampilan mirip Apple
+   Music, bukan sekadar blur statis. */
+body.bg-dynamic.bg-animated::after {
+    /* Blur besar tetap dipakai supaya terasa "blurred fluid", tapi
+       sedikit lebih kecil dari mode dinamis biasa agar warna tetap
+       terbaca saat blob bergerak di atasnya. */
+    filter: blur(calc(var(--cover-blur, 40px) * 1.15)) saturate(1.35);
+    /*
+     * Zoom besar + mask radial membuat TEPI cover melebur halus,
+     * jadi tidak ada garis tajam sama sekali, tapi warna cover tetap
+     * terbaca penuh.
+     */
+    transform: scale(2.4);
+    -webkit-mask-image: radial-gradient(
+        115% 115% at 50% 50%,
+        rgba(0, 0, 0, 1) 0%,
+        rgba(0, 0, 0, 0.82) 45%,
+        rgba(0, 0, 0, 0) 100%
+    );
+    mask-image: radial-gradient(
+        115% 115% at 50% 50%,
+        rgba(0, 0, 0, 1) 0%,
+        rgba(0, 0, 0, 0.82) 45%,
+        rgba(0, 0, 0, 0) 100%
+    );
+}
+
+
+/* ============================================================
+   ANIMATED BACKGROUND (FLUID MESH ALA APPLE MUSIC)
+   ------------------------------------------------------------
+   Dipakai saat bgMode = "dynamic" dan coverFit = "animated".
+   Susunan layer (dari belakang ke depan):
+     1. body::after            -> cover art warna
+     2. .bg-animated-mesh      -> 5 blob warna cover yang mengalir
+     3. .bg-animated-liquid    -> organic edge + shimmer (edge-only)
+     4. .bg-animated-grain     -> noise halus (opsional, 0 = off)
+     5. body::before           -> Overlay Gelap
+   Semua animasi hanya memakai `transform` + `opacity` supaya tetap
+   berjalan di compositor GPU (tanpa repaint tiap frame).
+   ============================================================ */
+
+#bg-animated {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+    isolation: isolate;
+    transition: opacity 480ms ease;
+}
+
+body.bg-animated #bg-animated {
+    opacity: 1;
+}
+
+/* Wadah mesh WAJIB memenuhi seluruh viewport. Sebelumnya elemen ini
+   punya width/height tetap 800px sehingga animasi hanya "hidup" di
+   satu sudut layar dan terlihat seperti background statis. */
+.bg-animated-mesh {
+    position: absolute;
+    inset: -25%;
+    width: auto;
+    height: auto;
+    transform: none;
+    transform-origin: center;
+    opacity: 0.55;
+    mix-blend-mode: screen;
+    transition: opacity 600ms ease;
+}
+
+body.bg-animated .bg-animated-mesh {
+    opacity: 1;
+}
+
+.mesh-blob {
+    position: absolute;
+    display: block;
+    width: 46%;
+    aspect-ratio: 1 / 1;
+    background-image: var(--bg-cover-image, none);
+    background-color: var(--bg-grad-b);
+    background-repeat: no-repeat;
+    border-radius: 50%;
+    -webkit-mask-image: radial-gradient(
+        62% 58% at 46% 52%,
+        rgba(0, 0, 0, 1) 0%,
+        rgba(0, 0, 0, 0.72) 42%,
+        rgba(0, 0, 0, 0.2) 68%,
+        rgba(0, 0, 0, 0) 100%
+    );
+    mask-image: radial-gradient(
+        62% 58% at 46% 52%,
+        rgba(0, 0, 0, 1) 0%,
+        rgba(0, 0, 0, 0.72) 42%,
+        rgba(0, 0, 0, 0.2) 68%,
+        rgba(0, 0, 0, 0) 100%
+    );
+    filter: blur(var(--animated-blur, 64px)) saturate(1.8) contrast(1.05);
+    opacity: 0.9;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+}
+
+/* ---- Blob 1: kiri atas, gerak utama ---- */
+.mesh-blob-1 {
+    top: -12%;
+    left: -14%;
+    width: 52%;
+    background-position: 12% 18%;
+    background-size: 165%;
+    animation: mesh-drift-a 24s ease-in-out infinite;
+}
+
+/* ---- Blob 2: kanan bawah, fase berlawanan ---- */
+.mesh-blob-2 {
+    right: -12%;
+    bottom: -10%;
+    width: 58%;
+    background-position: 86% 74%;
+    background-size: 160%;
+    animation: mesh-drift-b 30s ease-in-out infinite;
+    animation-delay: -7s;
+}
+
+/* ---- Blob 3: tengah kanan, skala bernafas ---- */
+.mesh-blob-3 {
+    top: 22%;
+    right: -6%;
+    width: 46%;
+    background-position: 64% 20%;
+    background-size: 185%;
+    animation: mesh-drift-c 36s ease-in-out infinite;
+    animation-delay: -12s;
+}
+
+/* ---- Blob 4: kiri bawah, mengunci warna kedua ---- */
+.mesh-blob-4 {
+    bottom: -8%;
+    left: -6%;
+    width: 50%;
+    background-position: 22% 88%;
+    background-size: 170%;
+    animation: mesh-drift-d 28s ease-in-out infinite;
+    animation-delay: -4s;
+}
+
+/* ---- Blob 5: highlight terang, kecil & cepat ---- */
+.mesh-blob-5 {
+    top: 4%;
+    left: 30%;
+    width: 34%;
+    background-position: 50% 8%;
+    background-size: 205%;
+    animation: mesh-drift-e 22s ease-in-out infinite;
+    animation-delay: -9s;
+}
+
+/* ============================================================
+   LIQUID DISTORTION LAYER
+   ============================================================ */
+
+/*
+ * Layer ini SENGAJA hanya bergerak di pinggir (mask transparan di
+ * tengah) sehingga blob yang mengalir tetap terlihat bersih, sementara
+ * tepian gambar terasa melengkung/meleleh seperti cairan.
+ */
+.bg-animated-liquid {
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-cover-image, none);
+    background-color: var(--bg-grad-a);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    filter: blur(var(--animated-blur, 64px)) saturate(1.25);
+    -webkit-mask-image: radial-gradient(
+        102% 102% at 50% 50%,
+        rgba(0, 0, 0, 0) 42%,
+        rgba(0, 0, 0, 0.35) 62%,
+        rgba(0, 0, 0, 0.9) 100%
+    );
+    mask-image: radial-gradient(
+        102% 102% at 50% 50%,
+        rgba(0, 0, 0, 0) 42%,
+        rgba(0, 0, 0, 0.35) 62%,
+        rgba(0, 0, 0, 0.9) 100%
+    );
+    mix-blend-mode: plus-lighter;
+    opacity: 0.5;
+    will-change: transform;
+    animation:
+        liquid-warp-a 34s ease-in-out infinite,
+        liquid-warp-b 47s ease-in-out infinite;
+}
+
+.bg-animated-liquid::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-cover-image, none);
+    background-repeat: no-repeat;
+    -webkit-mask-image: radial-gradient(
+        120% 120% at 50% 50%,
+        rgba(0, 0, 0, 0) 30%,
+        rgba(0, 0, 0, 0.25) 78%,
+        rgba(0, 0, 0, 0) 100%
+    );
+    mask-image: radial-gradient(
+        120% 120% at 50% 50%,
+        rgba(0, 0, 0, 0) 30%,
+        rgba(0, 0, 0, 0.25) 78%,
+        rgba(0, 0, 0, 0) 100%
+    );
+    mix-blend-mode: screen;
+    opacity: 0.55;
+}
+
+/* ============================================================
+   GRAIN (OPSIONAL) - default 0 = nonaktif
+   ============================================================ */
+
+.bg-animated-grain {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(
+        circle at 50% 50%,
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(0, 0, 0, 0) 60%
+    );
+    opacity: var(--cover-grain, 0);
+    mix-blend-mode: soft-light;
+    pointer-events: none;
+}
+
+/* ============================================================
+   ANIMATED KEYFRAMES (transform & opacity saja)
+   ============================================================ */
+
+@keyframes mesh-drift-a {
+    0% {
+        transform: translate3d(-18%, -12%, 0) scale(1.05) rotate(0deg);
+    }
+
+    33% {
+        transform: translate3d(22%, 18%, 0) scale(1.34) rotate(12deg);
+    }
+
+    66% {
+        transform: translate3d(-10%, 26%, 0) scale(1.18) rotate(-10deg);
+    }
+
+    100% {
+        transform: translate3d(-18%, -12%, 0) scale(1.05) rotate(0deg);
+    }
+}
+
+@keyframes mesh-drift-b {
+    0% {
+        transform: translate3d(16%, 18%, 0) scale(1.26) rotate(0deg);
+    }
+
+    38% {
+        transform: translate3d(-24%, -10%, 0) scale(1.04) rotate(-14deg);
+    }
+
+    72% {
+        transform: translate3d(8%, -26%, 0) scale(1.22) rotate(9deg);
+    }
+
+    100% {
+        transform: translate3d(16%, 18%, 0) scale(1.26) rotate(0deg);
+    }
+}
+
+@keyframes mesh-drift-c {
+    0% {
+        transform: translate3d(12%, -12%, 0) scale(0.98);
+    }
+
+    50% {
+        transform: translate3d(-16%, 16%, 0) scale(1.28);
+    }
+
+    100% {
+        transform: translate3d(12%, -12%, 0) scale(0.98);
+    }
+}
+
+@keyframes mesh-drift-d {
+    0% {
+        transform: translate3d(-14%, 12%, 0) scale(1.16);
+    }
+
+    30% {
+        transform: translate3d(18%, -6%, 0) scale(0.94);
+    }
+
+    64% {
+        transform: translate3d(-8%, -18%, 0) scale(1.24);
+    }
+
+    100% {
+        transform: translate3d(-14%, 12%, 0) scale(1.16);
+    }
+}
+
+@keyframes mesh-drift-e {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+        opacity: 0.8;
+    }
+
+    45% {
+        transform: translate3d(20%, 26%, 0) scale(1.4) rotate(16deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+        opacity: 0.8;
+    }
+}
+
+/* Liquid: peregangan lambat yang tidak seragam (scaleX != scaleY) */
+@keyframes liquid-warp-a {
+    0% {
+        transform: scale(1.12) rotate(0deg) skewX(0deg);
+    }
+
+    35% {
+        transform: scale(1.2, 1.08) rotate(4deg) skewX(3deg);
+    }
+
+    70% {
+        transform: scale(1.08, 1.24) rotate(-3deg) skewX(-4deg);
+    }
+
+    100% {
+        transform: scale(1.12) rotate(0deg) skewX(0deg);
+    }
+}
+
+/* Liquid: geser lembut supaya tepi terasa mengalir (tidak diam) */
+@keyframes liquid-warp-b {
+    0% {
+        translate: 0% 0%;
+    }
+
+    40% {
+        translate: 2.5% -2%;
+    }
+
+    75% {
+        translate: -2% 2.5%;
+    }
+
+    100% {
+        translate: 0% 0%;
+    }
+}
+
+/* ============================================================
+   ACCESSIBILITY: REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    .mesh-blob,
+    .bg-animated-liquid {
+        animation: none;
+    }
+
+    .mesh-blob-3 {
+        transform: scale(1.12);
+    }
+
+    .bg-animated-liquid {
+        transform: scale(1.12);
+    }
+}
+
+/* Fallback: kalau plus-lighter tidak dikenal, jangan biarkan layer
+   liquid menutupi segalanya (blend normal + opacity rendah). */
+@supports not (mix-blend-mode: plus-lighter) {
+    .bg-animated-liquid,
+    .bg-animated-liquid::after {
+        mix-blend-mode: screen;
+        opacity: 0.35;
+    }
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 1);
+    opacity: var(--bg-overlay, 0);
+    pointer-events: none;
+    z-index: 0;
+    transition: opacity 200ms ease;
+}
+
 
 
 /* ============================================================
@@ -56,9 +538,12 @@ body {
     flex-direction: column;
     align-items: flex-start;
 
-    padding: 50vh 10%;
+    padding: 50vh calc((100% - var(--lyric-width, 80%)) / 2);
 
     gap: 28px;
+
+    position: relative;
+    z-index: 1;
 }
 
 #lyrics::-webkit-scrollbar {
@@ -73,15 +558,16 @@ body {
 .lyric-line {
     position: relative;
 
-    font-size: 36px;
+    font-size: var(--lyric-font-size, 36px);
+    font-family: var(--lyric-font-family, -apple-system, "Segoe UI", sans-serif);
     font-weight: 700;
     line-height: 1.4;
 
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(var(--lyric-color, 255, 255, 255), var(--lyric-idle-opacity, 0.35));
 
-    opacity: 0.4;
+    opacity: var(--lyric-idle-opacity, 0.35);
 
-    filter: blur(1.5px);
+    filter: blur(var(--lyric-idle-blur, 1.5px));
 
     translate: 0 var(--y-offset, 0px);
 
@@ -106,7 +592,7 @@ body {
    ============================================================ */
 
 .lyric-line.active {
-    color: rgba(255, 255, 255, 1);
+    color: rgba(var(--lyric-color, 255, 255, 255), 1);
 
     opacity: 1;
 
@@ -116,7 +602,7 @@ body {
 }
 
 .mode-plain .lyric-line.active {
-    color: rgba(255, 255, 255, 1);
+    color: rgba(var(--lyric-color, 255, 255, 255), 1);
 
     opacity: 1;
 
@@ -127,8 +613,8 @@ body {
     -webkit-text-fill-color: initial;
 
     text-shadow:
-        0 0 14px rgba(255, 255, 255, 0.6),
-        0 0 28px rgba(255, 255, 255, 0.3);
+        0 0 14px rgba(var(--accent-rgb, 255, 255, 255), 0.6),
+        0 0 28px rgba(var(--accent-rgb, 255, 255, 255), 0.3);
 }
 
 
@@ -137,17 +623,17 @@ body {
    ============================================================ */
 
 .lyric-line.past {
-    opacity: 0.25;
+    opacity: calc(var(--lyric-idle-opacity, 0.35) * 0.72);
 
-    filter: blur(2.5px);
+    filter: blur(calc(var(--lyric-idle-blur, 1.5px) * 1.6));
 
     transform: scale(0.95);
 }
 
 .lyric-line.future {
-    opacity: 0.4;
+    opacity: var(--lyric-idle-opacity, 0.35);
 
-    filter: blur(1.5px);
+    filter: blur(var(--lyric-idle-blur, 1.5px));
 
     transform: scale(0.95);
 }
@@ -189,7 +675,7 @@ body {
 .char {
     display: inline-block;
 
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(var(--lyric-color, 255, 255, 255), var(--lyric-idle-opacity, 0.35));
 
     transition:
         color 50ms ease,
@@ -201,13 +687,19 @@ body {
 }
 
 .char.char-active {
-    color: rgba(255, 255, 255, 1);
+    color: rgba(var(--accent-rgb, 255, 255, 255), 1);
 
     text-shadow:
-        0 0 19px rgba(255, 255, 255, 0.5),
-        0 0 36px rgba(255, 255, 255, 0.2);
+        0 0 19px rgba(var(--accent-rgb, 255, 255, 255), 0.5),
+        0 0 36px rgba(var(--accent-rgb, 255, 255, 255), 0.2);
 
     animation: charBounceSpring 1400ms ease-out forwards;
+}
+
+/* Matikan glow bila efek dimatikan via Settings */
+body.no-glow .char.char-active,
+body.no-glow .lyric-line.active {
+    text-shadow: none;
 }
 
 
@@ -246,9 +738,9 @@ body {
 #lyrics .lyric-line.gap-line.past,
 #lyrics .lyric-line.gap-line.active {
     min-height: 1.4em;
-    font-size: 36px;
+    font-size: var(--lyric-font-size, 36px);
     font-weight: 700;
-    color: rgba(255, 255, 255, 1);
+    color: rgba(var(--lyric-color, 255, 255, 255), 1);
     opacity: 1 !important;
     filter: none !important;
     transform: scale(1);
@@ -641,3 +1133,608 @@ body {
         gap: 8px;
     }
 }
+
+
+/* ============================================================
+   SETTINGS BUTTON (KANAN ATAS)
+   ============================================================ */
+
+#btn-settings {
+    position: fixed;
+    top: 28px;
+    right: 28px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    opacity: 0.35;
+    transition: all 250ms ease;
+    outline: none;
+}
+
+#btn-settings:hover,
+#btn-settings.active {
+    opacity: 1;
+    color: rgba(255, 255, 255, 1);
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
+    transform: scale(1.08);
+}
+
+#btn-settings.active {
+    transform: rotate(60deg) scale(1.08);
+}
+
+#btn-settings:active {
+    transform: scale(0.95);
+}
+
+
+/* ============================================================
+   SETTINGS BACKDROP
+   ============================================================ */
+
+#settings-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 300;
+    opacity: 1;
+    transition: opacity 220ms ease;
+}
+
+#settings-backdrop.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+
+/* ============================================================
+   SETTINGS PANEL
+   ============================================================ */
+
+#settings-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 396px;
+    max-width: 94vw;
+    height: 100%;
+    background: linear-gradient(
+        180deg,
+        rgba(16, 22, 20, 0.94) 0%,
+        rgba(8, 12, 11, 0.96) 100%
+    );
+    backdrop-filter: blur(24px) saturate(1.3);
+    -webkit-backdrop-filter: blur(24px) saturate(1.3);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: -24px 0 70px rgba(0, 0, 0, 0.65);
+    z-index: 400;
+    display: flex;
+    flex-direction: column;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    transform: translateX(0);
+    transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 260ms ease;
+}
+
+#settings-panel.hidden {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.settings-header h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+#settings-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 200ms ease;
+    outline: none;
+}
+
+#settings-close:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.settings-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px 28px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.settings-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.settings-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.settings-group {
+    margin-bottom: 22px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.045) 0%,
+        rgba(255, 255, 255, 0.015) 100%
+    );
+}
+
+.settings-group-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 16px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.settings-group-title .group-icon {
+    font-size: 14px;
+    line-height: 1;
+    filter: saturate(1.2);
+}
+
+
+/* ============================================================
+   BACKGROUND MODE TABS
+   ============================================================ */
+
+.bg-mode-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 4px;
+}
+
+.bg-mode-tab {
+    flex: 1;
+    padding: 8px 4px;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10.5px;
+    font-weight: 700;
+    font-family: inherit;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    transition: all 180ms ease;
+    outline: none;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.bg-mode-tab:hover {
+    color: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.bg-mode-tab.active {
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.24) 0%,
+        rgba(255, 255, 255, 0.13) 100%
+    );
+    color: #fff;
+    box-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.bg-section {
+    display: none;
+    margin-bottom: 14px;
+}
+
+.bg-section.visible {
+    display: block;
+}
+
+.settings-hint {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 2px solid rgba(255, 255, 255, 0.15);
+    padding: 10px 12px;
+    border-radius: 4px;
+}
+
+
+/* ============================================================
+   COLOR INPUTS
+   ============================================================ */
+
+.settings-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 8px;
+}
+
+.color-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.color-input {
+    width: 44px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.color-input::-webkit-color-swatch-wrapper {
+    padding: 3px;
+}
+
+.color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 5px;
+}
+
+.color-hex {
+    flex: 1;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 9px;
+    background: rgba(0, 0, 0, 0.35);
+    color: rgba(255, 255, 255, 0.9);
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    outline: none;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.color-hex:focus {
+    border-color: rgba(255, 255, 255, 0.45);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+
+/* ============================================================
+   DUAL COLOR (GRADIENT LINEAR)
+   ============================================================ */
+
+.dual-color-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.color-field {
+    min-width: 0;
+}
+
+.field-caption {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.color-field .color-input {
+    width: 38px;
+}
+
+
+/* ============================================================
+   SELECT DROPDOWN
+   ============================================================ */
+
+.settings-select {
+    flex: 1;
+    min-width: 0;
+    height: 36px;
+    padding: 0 34px 0 12px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 9px;
+    background-color: rgba(0, 0, 0, 0.35);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    -webkit-appearance: none;
+    appearance: none;
+    color: rgba(255, 255, 255, 0.9);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.settings-select:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.settings-select:focus {
+    border-color: rgba(255, 255, 255, 0.45);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+.settings-select option {
+    background: #12181a;
+    color: #fff;
+}
+
+
+/* ============================================================
+   GRADIENT 4 TITIK
+   ============================================================ */
+
+.gradient-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.gradient-toolbar .settings-label {
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+
+.gradient-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.corner-picker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+
+/* ============================================================
+   RANGE SLIDERS & ROWS
+   ============================================================ */
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.settings-row .settings-label {
+    margin-bottom: 0;
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+.settings-row .color-row {
+    flex: 1;
+}
+
+.settings-range {
+    flex: 1;
+    min-width: 80px;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.settings-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: transform 150ms ease;
+}
+
+.settings-range::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.settings-range::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+}
+
+.range-value {
+    flex: 0 0 46px;
+    text-align: right;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.75);
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ============================================================
+   TOGGLE ROWS
+   ============================================================ */
+
+.settings-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    user-select: none;
+}
+
+.settings-toggle-row input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 38px;
+    height: 20px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.15);
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    transition: background 200ms ease;
+    flex-shrink: 0;
+}
+
+.settings-toggle-row input[type="checkbox"]::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 200ms ease;
+}
+
+.settings-toggle-row input[type="checkbox"]:checked {
+    background: #4cd964;
+}
+
+.settings-toggle-row input[type="checkbox"]:checked::after {
+    transform: translateX(18px);
+}
+
+
+/* ============================================================
+   SETTINGS FOOTER
+   ============================================================ */
+
+.settings-footer {
+    display: flex;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.settings-btn {
+    flex: 1;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 200ms ease;
+    outline: none;
+}
+
+.settings-btn.primary {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+}
+
+.settings-btn.primary:hover {
+    background: rgba(255, 255, 255, 0.28);
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
+}
+
+.settings-btn.secondary {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.settings-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.settings-btn:active {
+    transform: scale(0.97);
+}
+
+
+.corner-label {
+    flex: 1;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.corner-color {
+    width: 34px;
+    height: 28px;
+}
+

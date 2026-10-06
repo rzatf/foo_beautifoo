@@ -67,6 +67,40 @@ async function getLyrics({ title, artist, duration }) {
             return null;
         }
 
+        // ========================================================
+        // VERIFIKASI TITLE & ARTIST DARI HASIL MATCHING.
+        //
+        // Musixmatch kadang mengembalikan track yang berbeda.
+        // ========================================================
+
+        const { verifyMetadata } = require("../utils/matcher");
+
+        const responseSong = {
+            title: trackMeta?.track_name || title,
+            artist: trackMeta?.artist_name ? [trackMeta.artist_name] : [artist],
+            album: trackMeta?.album_name || "",
+            duration: Number(
+                trackMeta?.track_length || duration
+            ) || 0
+        };
+
+        const check = verifyMetadata(responseSong, {
+            title,
+            artist,
+            duration
+        });
+
+        if (!check.ok) {
+            console.warn(
+                `[Musixmatch] Ditolak: hasil tidak cocok ` +
+                `(${check.reason}) -> ` +
+                `${responseSong.artist.join(", ")} - ` +
+                `${responseSong.title}`
+            );
+
+            return null;
+        }
+
         // Step 3: Ambil Per-Word Timing (Richsync)
         try {
             const richRes = await axios.get(`${BASE_URL}/track.richsync.get`, {
@@ -84,7 +118,8 @@ async function getLyrics({ title, artist, duration }) {
                 return {
                     rawLyric: parsedRichsync,
                     source: "musixmatch",
-                    format: "richsync"
+                    format: "richsync",
+                    song: responseSong
                 };
             }
         } catch (e) {
@@ -97,7 +132,8 @@ async function getLyrics({ title, artist, duration }) {
             return {
                 rawLyric: subtitleRaw,
                 source: "musixmatch",
-                format: "subtitle"
+                format: "subtitle",
+                song: responseSong
             };
         }
 
